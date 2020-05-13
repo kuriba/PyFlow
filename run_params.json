@@ -1,0 +1,15 @@
+{
+  "default": {
+    "slurm": {
+      "EMAIL": null,
+      "PARTITION": "short"
+    },
+    "gaussian16": {
+      "NPROC": 14,
+      "MEMORY": 8
+    },
+    "gamess": {
+      "WORDS": 1000
+    }
+  }
+}

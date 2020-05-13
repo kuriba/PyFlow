@@ -1,0 +1,29 @@
+{
+  "default": {
+    "initialStep": "pm7",
+    "steps": {
+      "pm7": {
+        "program": "gaussian16",
+        "route": "#p pm7 opt",
+        "opt": true,
+        "conformers": true,
+        "dependents": [
+          "rm1-d"
+        ]
+      },
+      "rm1-d": {
+        "program": "gamess",
+        "conformers": true,
+        "dependents": [
+          "sp-dft"
+        ]
+      },
+      "sp-dft": {
+        "program": "gaussian16",
+        "route": "#p M06/6-31+G(d,p)",
+        "opt": true,
+        "conformers": true
+      }
+    }
+  }
+}
