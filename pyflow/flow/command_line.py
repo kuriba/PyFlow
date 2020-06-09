@@ -79,49 +79,27 @@ class FlowAction:
 
         main()
 
+    def run(self):
+        from pyflow.flow.flow_runner import FlowRunner
 
-def parse_args():
-    parser = argparse.ArgumentParser(
-        description="Parser for interacting with pyflow through the command line",
-        formatter_class=argparse.RawTextHelpFormatter)
+        parser = argparse.ArgumentParser(description="Run quantum chemistry calculation")
 
-    action_help = textwrap.dedent("""
-        begin = begins a workflow
-        run = runs a calculation
-        handle = handles a completed, failed, or timed-out calculation
-        progress = displays the progress for the current workflow
-        setup = sets up a new workflow directory
-        conformers = generate conformers
-        """)
+        parser.add_argument(
+            "-s", "--step_id",
+            type=str,
+            required=True,
+            help="the step ID to run")
 
-    parser.add_argument(
-        'action',
-        choices=('begin', 'run', 'handle', 'progress', 'setup', 'conformers'),
-        type=str,
-        help=action_help)
+        parser.add_argument(
+            "-t", "--task_id",
+            type=int,
+            required=True,
+            help="the task ID of the desired molecule")
 
-    parser.add_argument(
-        '-s', '--step_id',
-        type=str,
-        required='run' in sys.argv or 'handle' in sys.argv,
-        help="the step ID for which to take action")
+        args = vars(parser.parse_args(sys.argv[2:]))
 
-    parser.add_argument(
-        '-t', '--task_id',
-        type=int,
-        required='run' in sys.argv or 'handle' in sys.argv,
-        help="the array task ID used to determine which molecule to run or handle")
-
-    try:
-        args = vars(parser.parse_args())
-    except:
-        parser.print_help()
-        sys.exit(0)
-
-    return args
+        FlowRunner.run_calc(args["step_id"], args["task_id"])
 
 
 def main():
     FlowAction()
-
-    # TODO define main function as command line entry point

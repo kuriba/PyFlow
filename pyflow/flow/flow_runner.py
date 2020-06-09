@@ -1,4 +1,5 @@
 import subprocess
+from linecache import getline
 from pathlib import Path
 from typing import List, Tuple
 
@@ -33,6 +34,9 @@ class FlowRunner:
 
     PROGRAM_INPUT_WRITER = {"gaussian16": GaussianWriter,
                             "gamess": GamessWriter}
+
+    PROGRAM_COMMANDS = {"gaussian16": "g16",
+                        "gamess": "rungms"}
 
     def __init__(self,
                  current_step_id: str,
@@ -312,15 +316,16 @@ class FlowRunner:
 
         :return: an SbatchWriter object
         """
-
         sbatch_filename = "{}.sbatch".format(self.current_step_id)
         sbatch_filepath = self.current_step_dir / sbatch_filename
 
         sbatch_commands = self.get_run_commands()
 
+        jobname = "{}_{}".format(self.workflow_dir.name, self.current_step_id)
+
         sbatch_writer = SbatchWriter.from_config(step_config=self.current_step_config,
                                                  filepath=sbatch_filepath,
-                                                 jobname=self.current_step_id,
+                                                 jobname=jobname,
                                                  array=array_size,
                                                  commands=sbatch_commands,
                                                  cores=self.current_step_config["nproc"],
@@ -365,16 +370,18 @@ class FlowRunner:
     def _get_dependents(self, step_id):
         return self.flow_config.get_dependents(step_id)
 
+    @staticmethod
+    def run_calc(step_id: str, task_id: int):
+        flow_runner = FlowRunner(current_step_id=step_id)
+        input_file = flow_runner.get_input_file(task_id)
 
-def get_input_file(slurm_array_task_id: int):
-    pass
+        flow_runner.run_quantum_chem(input_file)
 
+    def get_input_file(self, task_id: int) -> Path:
+        job_list_file = self.current_step_dir / "input_files.txt"
+        input_file = Path(getline(job_list_file, task_id).strip()).resolve()
+        return input_file
 
-def run_calc(program: str):
-    run_command = {"gaussian16": "g16",
-                   "gamess": "rungms"}
-
-    input_file = None
-
-    subprocess.run([run_command[program]])
-    pass
+    def run_quantum_chem(self, input_file: Path) -> None:
+        qc_command = FlowRunner.PROGRAM_COMMANDS[self.step_program]
+        process = subprocess.run([qc_command, input_file])
