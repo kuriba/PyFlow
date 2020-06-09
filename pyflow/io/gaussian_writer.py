@@ -45,7 +45,7 @@ class GaussianWriter(AbstractInputFileWriter):
         self.append("{} {}\n".format(charge, self.args["multiplicity"]))
 
         # coordinates
-        self.append("{}".format(coordinates))
+        self.append("{}\n".format(coordinates))
 
         if self.args.get("verbose", False):
             print("\n" + self.get_text())
