@@ -4,3 +4,4 @@
 /Makefile
 /_build/
 .idea/
+__pycache__/
