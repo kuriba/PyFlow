@@ -1,18 +1,19 @@
+import argparse
 import os
 import sys
 import time
-import argparse
-from pyflow.mol.mol_utils import valid_smiles
-
-from tqdm import tqdm
-from rdkit import Chem
-from rdkit.Chem import AllChem
-from rdkit import rdBase
 from itertools import chain
+
+from rdkit import Chem
+from rdkit import rdBase
+from rdkit.Chem import AllChem
+from tqdm import tqdm
+
+from pyflow.mol.mol_utils import valid_smiles
 
 rdBase.DisableLog('rdApp.warning')
 
-#TODO add comments
+# TODO add comments
 
 """
 This is a script which substitutes a given core molecule with the standard set
@@ -70,7 +71,7 @@ terminal_placeholder_mol = Chem.MolFromSmarts(terminal_placeholder)
 
 # generates SMILES strings for the given core smiles
 def generate_library(parent_smiles):
-    parent_mol = Chem.MolFromSmiles(parent_smiles)
+    parent_mol = Chem.MolFromSmiles(parent_smiles, sanitize=False)
 
     # append linkers to parent molecule to generate unsubstituted cores
     unsubstituted_cores = []
@@ -141,16 +142,19 @@ def generate_conformers(list_of_smiles, library_name, num_confs):
 
         # generate conformers
         num_generated_confs = 0
-        rms_threshold = 0.25
+        rms_threshold = 0.005
 
         while num_generated_confs < target_num_confs and rms_threshold > 0:
-            confs = AllChem.EmbedMultipleConfs(mol, numConfs=target_num_confs,
-                                               useRandomCoords=True,
+            confs = AllChem.EmbedMultipleConfs(mol,
+                                               numConfs=target_num_confs,
+                                               useRandomCoords=False,
                                                pruneRmsThresh=rms_threshold,
                                                numThreads=0,
-                                               useBasicKnowledge=True)
+                                               useBasicKnowledge=True,
+                                               forceTol=0.001)
             num_generated_confs = len(confs)
-            rms_threshold -= 0.01
+            rms_threshold -= 0.001
+            print("RMS threshold updated to: {}".format(rms_threshold))
 
         # track number of successfully generated conformers
         if num_generated_confs == 0:
@@ -162,7 +166,10 @@ def generate_conformers(list_of_smiles, library_name, num_confs):
             good_conformers += target_num_confs
 
         # optimize conformers
-        AllChem.UFFOptimizeMoleculeConfs(mol, numThreads=0)
+        # opt = AllChem.UFFOptimizeMoleculeConfs(mol, numThreads=0, maxIters=1000, vdwThresh=10, ignoreInterfragInteractions=True)
+        opt = AllChem.MMFFOptimizeMoleculeConfs(mol, numThreads=0, maxIters=10000, nonBondedThresh=10,
+                                                ignoreInterfragInteractions=True)
+        print(opt)
 
         # write conformers to PDB files
         inchi_key = Chem.InchiToInchiKey(Chem.MolToInchi(mol))

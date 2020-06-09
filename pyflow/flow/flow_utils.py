@@ -1,16 +1,18 @@
 import json
-from pyflow.io.io_utils import upsearch
-from pyflow.flow.flow_config import CONFIG_FILE
+import os
+from pathlib import Path
 
 # files from which to load run parameters
-PARAMS_FILE = ".run_params"
+from pyflow.io.io_utils import upsearch
+
+RUN_PARAMS_FILENAME = "run_params.json"
+WORKFLOW_PARAMS_FILENAME = ".params"
 
 
 def load_run_params(config_id: str = "default", program: str = None) -> dict:
     """
-    Loads the workflow configuration information stored in the ``.run_params``
-    file of a workflow into a dictionary. The file is assumed to be located
-    in the root directory of the workflow.
+    Loads the workflow configuration information stored in the ``run_params.json``
+    file of a workflow into a dictionary.
 
     The general structure of the dictionary is as follows:
     ::
@@ -38,47 +40,60 @@ def load_run_params(config_id: str = "default", program: str = None) -> dict:
     :param program: program for which to load parameters
     :return: a dictionary with workflow run parameters
     """
-    params_file = upsearch(PARAMS_FILE)
-    with open(params_file) as f:
+
+    params_file = get_path_to_pyflow() / "conf" / RUN_PARAMS_FILENAME
+
+    with params_file.open() as f:
         params = json.load(f)
+
     if program is None:
         return params[config_id]
     else:
         return params[config_id][program]
 
 
-def load_flow_config(config_id: str = "default", step_id: str = None) -> dict:
+def load_workflow_params() -> dict:
     """
-    Loads the workflow configuration stored in the ``.flow_config`` file of
-    a workflow into a dictionary. The ``.flow_config`` file uses the JSON
-    format to store the calculation steps for a workflow.
+    Returns a dict of high level workflow  details stored in the .params file in
+    the main directory of a workflow. These details include the path to the workflow ]
+    configuration file which details all of the steps, the configuration ID, and
+    the number of conformers in the workflow.
 
-    There is a general dictionary with the ID "default" which corresponds to
-    the default VERDE Materials DB workflow.  #TODO add workflow image link
-    The dictionary stores an ``"initialStep"`` parameter to determine where to
-    start a workflow. The steps of the workflow are stored in a nested
-    dictionary under the key ``"steps"``. Each step may define various parameters
-    including the following:
-
-    + ``"program"``
-    + ``"opt"``
-    + ``"route"`` (if ``"program" == "gaussian16"``)
-    + ``"dependents"``
-    + ``"conformers"``
-
-    For more details on the ``.flow_config`` file and accepted parameters
-    see :class:`pyflow.flow.flow_config.FlowConfig`.
-
-
-    :param config_id: unique string ID for the desired workflow configuration
-    :param step_id: the step to load
-    :return: a dictionary with a workflow configuration
+    :return: a dict of workflow configuration details
+    :raises FileNotFoundError: if .params file is not found
     """
 
-    config_file = upsearch(CONFIG_FILE)
-    with open(config_file) as f:
+    try:
+        workflow_config_file = upsearch(WORKFLOW_PARAMS_FILENAME)
+    except FileNotFoundError:
+        message = "Unable to find .params file; ensure that you are in a workflow directory."
+        raise FileNotFoundError(message)
+
+    with workflow_config_file.open() as f:
+        workflow_config = json.load(f)
+
+    return workflow_config
+
+
+def get_path_to_pyflow() -> Path:
+    """
+    Returns a ``Path`` object which points to the ``PYFLOW`` environment variable.
+    :return: a Path object with the path to ``PYFLOW``
+    """
+    return Path(os.environ["PYFLOW"])
+
+
+def get_num_conformers() -> int:
+    """
+    Returns the number of conformers for each molecule in the current workflow.
+    :return: the number of conformers
+    """
+    params_file = upsearch(WORKFLOW_PARAMS_FILENAME)
+
+    with params_file.open() as f:
         config = json.load(f)
-    if step_id is None:
-        return config[config_id]
-    else:
-        return config[config_id]["steps"][step_id]
+    try:
+        return config["num_conformers"]
+    except KeyError:
+        message = "'num_conformers' not yet defined in {}".format(WORKFLOW_PARAMS_FILENAME)
+        raise KeyError(message)

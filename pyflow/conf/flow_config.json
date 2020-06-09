@@ -1,12 +1,25 @@
 {
   "default": {
-    "initialStep": "pm7",
+    "initial_step": "pm7",
     "steps": {
       "pm7": {
         "program": "gaussian16",
         "route": "#p pm7 opt",
         "opt": true,
+        "freq": false,
         "conformers": true,
+        "proceed_on_failed_conf": false,
+        "attempt_restart": false,
+        "nproc": 14,
+        "memory": 4,
+        "rwf": false,
+        "chk": false,
+        "timelim": 1400,
+        "timelim_padding": 40,
+        "partition": "short",
+        "email": false,
+        "simul_jobs": 50,
+        "save_output": true,
         "dependents": [
           "rm1-d"
         ]
@@ -27,3 +40,4 @@
     }
   }
 }
+

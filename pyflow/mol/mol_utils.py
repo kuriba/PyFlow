@@ -1,7 +1,8 @@
 import os
 from openbabel import openbabel
-from rdkit import Chem
 from typing import List
+
+from rdkit import Chem
 
 
 def get_charge(smiles: str) -> int:
@@ -11,12 +12,11 @@ def get_charge(smiles: str) -> int:
     :param smiles: the SMILES string of the molecule
     :return: the charge of the molecule
     """
-    mol = Chem.MolFromSmiles(smiles)
+    mol = Chem.MolFromSmiles(smiles, sanitize=False)
     return Chem.GetFormalCharge(mol)
 
 
-def get_formatted_geometry(geometry_file: str, geometry_format: str = None,
-                           output_format: str = "xyz") -> str:
+def get_formatted_geometry(geometry_file: str, output_format: str, geometry_format: str = None) -> str:
     """
     Returns the formatted molecular geometry from the given geometry file. The
     format of the geometry file is assumed based on the filename extension but
@@ -43,10 +43,19 @@ def get_formatted_geometry(geometry_file: str, geometry_format: str = None,
     formatted_output = obConversion.WriteString(mol)
 
     if formatted_output == "":
-        raise Exception(
-            "Unsupported input geometry format: {}".format(geometry_format))
+        raise Exception("Unsupported input geometry format: {}".format(geometry_format))
 
     return formatted_output
+
+
+def get_energy(output_file: str, format: str):
+    # TODO implement get_energy
+    if format == "gaussian16":
+        pass
+    elif format == "gamess":
+        pass
+    else:
+        raise NotImplementedError("Unable to obtain energy from file format '{}'".format(format))
 
 
 def get_smiles(geometry_file: str, geometry_format: str = None) -> str:

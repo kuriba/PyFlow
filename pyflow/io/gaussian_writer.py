@@ -1,14 +1,61 @@
-import os
-import sys
+from __future__ import annotations
+
 import argparse
-from pyflow.io.io_utils import FileWriter
-from pyflow.mol import mol_utils
+import sys
+from pathlib import Path
+
 from pyflow.flow.flow_utils import load_run_params
+from pyflow.io.file_writer import AbstractInputFileWriter
+from pyflow.mol import mol_utils
+
+
+class GaussianWriter(AbstractInputFileWriter):
+
+    @classmethod
+    def get_openbabel_format(cls) -> str:
+        return "xyz"
+
+    def write(self) -> None:
+
+        # remove charge/multiplicity from OpenBabel generated coordinates
+        coordinates = self.coordinates.split("\n", 2)[2]
+
+        # charge and multiplicity
+        smiles = mol_utils.get_smiles(str(self.args["geometry_file"]))
+        charge = mol_utils.get_charge(smiles) + self.args["charge"]
+
+        # link 0 commands
+        if self.args["rwf"] and self.args["chk"]:  # save rwf and chk file
+            link0 = "%chk={}.chk\n%rwf={}.rwf\n%Save\n"
+        elif self.args["rwf"]:
+            link0 = "%chk={}.chk\n%NoSave\n%rwf={}.rwf\n"
+        elif self.args["chk"]:
+            link0 = "%rwf={}.rwf\n%NoSave\n%chk={}.chk\n"
+        else:
+            link0 = "%chk={}.chk\n%rwf={}.rwf\n%NoSave\n"
+
+        self.append(link0.format(self.args["title"], self.args["title"]))
+
+        # memory and processor specification
+        self.append("%mem={}GB\n%nproc={}\n".format(self.args["memory"], self.args["nproc"]))
+
+        # route, title, charge, and multiplicity
+        self.append("{}\n\n".format(self.args["route"]))
+        self.append("{}\n\n".format(self.args["title"]))
+        self.append("{} {}\n".format(charge, self.args["multiplicity"]))
+
+        # coordinates
+        self.append("{}".format(coordinates))
+
+        if self.args.get("verbose", False):
+            print("\n" + self.get_text())
+
+        super().write()
 
 
 def parse_args():
     # default configuration options
-    config = load_run_params(program="gaussian16")
+    default_params = load_run_params(program="gaussian16")
 
     parser = argparse.ArgumentParser(
         description="Gaussian 16 input file options parser",
@@ -17,6 +64,7 @@ def parse_args():
     parser.add_argument(
         "-f", "--formats",
         action="store_true",
+        default=False,
         help="display supported geometry file formats")
 
     # general options
@@ -44,12 +92,12 @@ def parse_args():
         "-n", "--nproc",
         type=int,
         help="number of processors",
-        default=config["NPROC"])
+        default=default_params["nproc"])
     link0_options.add_argument(
         "-m", "--memory",
         type=int,
         help="amount of memory in GB",
-        default=config["MEMORY"])
+        default=default_params["memory"])
 
     # route section
     route_options = parser.add_argument_group("Route section options")
@@ -73,11 +121,15 @@ def parse_args():
         help="multiplicity of the molecule",
         default=1)
     molecule_options.add_argument(
-        "-g", "--geometry",
+        "-g", "--geometry_file",
         type=str,
         help="path to geometry file",
         default=argparse.SUPPRESS,
         required="--formats" not in sys.argv and "-f" not in sys.argv)
+    molecule_options.add_argument(
+        "-gf", "--geometry_format",
+        type=str,
+        help="the format of the input geometry file")
 
     # file management options
     file_group = parser.add_argument_group("File management options")
@@ -98,57 +150,18 @@ def parse_args():
 
 
 # uses arguments to construct a Gaussian 16 input file
-def main(args):
-    if args["formats"]:
-        for i in mol_utils.get_supported_babel_formats():
-            print(i)
-        sys.exit()
-
-    # default title if unspecified
+def main(args: dict) -> None:
     if args["title"] is None:
-        args["title"] = os.path.splitext(os.path.basename(args["geometry"]))[0]
+        args["title"] = Path(args["geometry_file"]).stem
 
-    # input file path
-    g16_file = FileWriter(
-        "{}.com".format(args["title"]),
-        args["location"],
-        overwrite_mode=args["overwrite"])
+    filepath = Path(args.pop("location")).resolve() / "{}.com".format(args["title"])
 
-    # get formatted coordinates
-    coordinates = mol_utils.get_formatted_geometry(args["geometry"])
-    coordinates = coordinates.split("\n", 2)[2]
-
-    # title, charge, multiplicity, coordinates
-    smiles = mol_utils.get_smiles(args["geometry"])
-    charge = mol_utils.get_charge(smiles) + args["charge"]
-
-    # link 0 commands
-    if args["rwf"] and args["chk"]:  # save rwf and chk file
-        link0 = "%chk={}.chk\n%rwf={}.rwf\n%Save\n"
-    elif args["rwf"]:
-        link0 = "%chk={}.chk\n%NoSave\n%rwf={}.rwf\n"
-    elif args["chk"]:
-        link0 = "%rwf={}.rwf\n%NoSave\n%chk={}.chk\n"
-    else:
-        link0 = "%chk={}.chk\n%rwf={}.rwf\n%NoSave\n"
-    g16_file.append(link0.format(args["title"], args["title"]))
-
-    # memory and processor specification
-    g16_file.append(
-        "%mem={}GB\n%nproc={}\n".format(args["memory"], args["nproc"]))
-
-    # route, title, charge, and multiplicity
-    g16_file.append("{}\n\n".format(args["route"]))
-    g16_file.append("{}\n\n".format(args["title"]))
-    g16_file.append("{} {}\n".format(charge, args["multiplicity"]))
-
-    # coordinates
-    g16_file.append("{}".format(coordinates))
-
-    if args["verbose"]:
-        print("\n" + g16_file.get_text())
-
-    g16_file.write()
+    gaussian_writer = GaussianWriter(filepath=filepath,
+                                     geometry_file=args.pop("geometry_file"),
+                                     geometry_format=args.pop("geometry_format"),
+                                     overwrite_mode=args.pop("overwrite"),
+                                     **args)
+    gaussian_writer.write()
 
 
 if __name__ == "__main__":
