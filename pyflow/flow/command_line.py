@@ -91,14 +91,20 @@ class FlowAction:
             help="the step ID to run")
 
         parser.add_argument(
-            "-t", "--task_id",
+            "-i", "--task_id",
             type=int,
             required=True,
             help="the task ID of the desired molecule")
 
+        parser.add_argument(
+            "-t", "--time",
+            type=int,
+            required=True,
+            help="time limit in minutes")
+
         args = vars(parser.parse_args(sys.argv[2:]))
 
-        FlowRunner.run_calc(args["step_id"], args["task_id"])
+        FlowRunner.run_calc(args["step_id"], args["task_id"], timelimit=args["time"])
 
 
 def main():
