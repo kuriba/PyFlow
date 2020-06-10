@@ -66,9 +66,9 @@ class FlowRunner:
             self.workflow_dir = workflow_dir
 
         self.current_step_id = current_step_id
-        self.current_step_config = flow_config.get_step(current_step_id)
+        self.current_step_config = self.flow_config.get_step(current_step_id)
         self.current_step_dir = self.workflow_dir / self.current_step_id
-        self.step_program = flow_config.get_step(current_step_id)["program"]
+        self.step_program = self.flow_config.get_step(current_step_id)["program"]
 
     def run(self, show_progress: bool = False) -> None:
         """
