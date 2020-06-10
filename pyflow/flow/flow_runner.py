@@ -375,16 +375,20 @@ class FlowRunner:
         flow_runner = FlowRunner(current_step_id=step_id)
         input_file = flow_runner.get_input_file(task_id)
 
-        flow_runner.run_quantum_chem(str(input_file), timelimit)
+        flow_runner.run_quantum_chem(input_file, timelimit)
 
     def get_input_file(self, task_id: int) -> Path:
         job_list_file = self.current_step_dir / "input_files.txt"
         input_file = Path(getline(job_list_file, task_id).strip()).resolve()
         return input_file
 
-    def run_quantum_chem(self, input_file: str, timelimit: int) -> None:
+    def run_quantum_chem(self, input_file: Path, timelimit: int) -> None:
         qc_command = FlowRunner.PROGRAM_COMMANDS[self.step_program]
+        working_dir = input_file.parent
         if timelimit is None:
-            process = subprocess.run([qc_command, input_file])
+            process = subprocess.run([qc_command, input_file],
+                                     cwd=working_dir)
         else:
-            process = subprocess.run([qc_command, input_file], timeout=timelimit * 60)
+            process = subprocess.run([qc_command, input_file],
+                                     timeout=timelimit * 60,
+                                     cwd=working_dir)

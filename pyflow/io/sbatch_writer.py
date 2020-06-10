@@ -75,7 +75,9 @@ class SbatchWriter(FileWriter):
         Submits the sbatch file represented by this SbatchWriter using the ``sbatch`` command.
         :return: the job ID of the submitted job
         """
-        process = subprocess.run(["sbatch", str(self.filepath.resolve())], capture_output=True, check=True)
+        working_dir = self.filepath.parent
+        process = subprocess.run(["sbatch", str(self.filepath.resolve())],
+                                 capture_output=True, check=True, cwd=working_dir)
         job_id = int(process.stdout.split()[-1])
         return job_id
 
