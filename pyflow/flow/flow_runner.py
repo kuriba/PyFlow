@@ -378,7 +378,7 @@ class FlowRunner:
         flow_runner.run_quantum_chem(input_file, timelimit)
 
     def get_input_file(self, task_id: int) -> Path:
-        job_list_file = self.current_step_dir / "input_files.txt"
+        job_list_file = str(self.current_step_dir / "input_files.txt")
         input_file = Path(getline(job_list_file, task_id).strip()).resolve()
         return input_file
 
