@@ -55,7 +55,7 @@ class FlowRunner:
             workflow_params = load_workflow_params()
             config_file = workflow_params["config_file"]
             config_id = workflow_params["config_id"]
-            self.flow_config = FlowConfig.load_flow_config(config_file, config_id)
+            self.flow_config = FlowConfig(config_file, config_id)
         else:
             self.flow_config = flow_config
 
