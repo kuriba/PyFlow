@@ -1,18 +1,29 @@
-import argparse
 import json
 from pathlib import Path
 
-from pyflow.flow.flow_config import FlowConfig, CONFIG_FILE
-from pyflow.flow.flow_utils import get_path_to_pyflow, WORKFLOW_PARAMS_FILENAME
+from pyflow.flow.flow_config import FlowConfig
+from pyflow.flow.flow_utils import WORKFLOW_PARAMS_FILENAME
 
 
-def setup_dirs(args):
-    save_location = Path(args["location"])
+def setup_dirs(save_location: str, workflow_name: str, config_file: str, config_id: str) -> None:
+    """
 
-    main_dir = save_location / args["name"]
+    :param save_location:
+    :param workflow_name:
+    :param config_file:
+    :param config_id:
+
+    :return: None
+    :raises FileExistsError: if the specified workflow directory already exists
+
+    """
+
+    save_location = Path(save_location)
+
+    main_dir = save_location / workflow_name
 
     # read/validate config file
-    config = FlowConfig(config_file=args["config_file"], config_id=args["config_id"])
+    config = FlowConfig(config_file=config_file, config_id=config_id)
 
     # try to make main workflow directory
     try:
@@ -36,54 +47,8 @@ def setup_dirs(args):
 
     # write config filename and config ID to .params file in workflow directory
     flow_instance_config_file = main_dir / WORKFLOW_PARAMS_FILENAME
-    flow_instance_config = {"config_file": str(args["config_file"]),
-                            "config_id": str(args["config_id"])}
+    flow_instance_config = {"config_file": str(config_file),
+                            "config_id": str(config_id)}
 
     with flow_instance_config_file.open("w") as f:
         f.write(json.dumps(flow_instance_config, indent=4))
-
-
-def parse_args():
-    parser = argparse.ArgumentParser(
-        description="PyFlow workflow directory setup script")
-
-    parser.add_argument(
-        "-n", "--name",
-        type=str,
-        required=True,
-        help="the name of the workflow")
-
-    parser.add_argument(
-        "-l", "--location",
-        type=str,
-        default=".",
-        help="the location in which to create the workflow directory")
-
-    parser.add_argument(
-        "-f", "--config_file",
-        type=str,
-        default=get_path_to_pyflow() / "conf" / CONFIG_FILE,
-        help="the path to the configuration file")
-
-    parser.add_argument(
-        "-id", "--config_id",
-        type=str,
-        default="default",
-        help="the id of the desired workflow configuration")
-
-    args = vars(parser.parse_args())
-
-    return args
-
-
-"""
-def main():
-    # parse arguments
-    args = parse_args()
-
-    # run setup
-    setup_dirs(args)
-
-
-if __name__ == "__main__":
-    main()"""

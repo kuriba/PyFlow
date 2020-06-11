@@ -1,3 +1,4 @@
+import os
 import subprocess
 from linecache import getline
 from pathlib import Path
@@ -371,9 +372,9 @@ class FlowRunner:
         return self.flow_config.get_dependents(step_id)
 
     @staticmethod
-    def run_calc(step_id: str, task_id: int, timelimit: int = None):
+    def run_array_calc(step_id: str, task_id: int, timelimit: int = None):
         flow_runner = FlowRunner(current_step_id=step_id)
-        input_file = flow_runner.get_input_file(task_id)
+        input_file = flow_runner.get_input_file(os.environ["SLURM_ARRAY_TASK_ID"])
 
         flow_runner.run_quantum_chem(input_file, timelimit)
 

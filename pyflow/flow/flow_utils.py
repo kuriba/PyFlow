@@ -2,9 +2,10 @@ import json
 import os
 from pathlib import Path
 
-# files from which to load run parameters
 from pyflow.io.io_utils import upsearch
 
+# files from which to load run parameters
+CONFIG_FILE = "flow_config.json"
 RUN_PARAMS_FILENAME = "run_params.json"
 WORKFLOW_PARAMS_FILENAME = ".params"
 
@@ -41,9 +42,9 @@ def load_run_params(config_id: str = "default", program: str = None) -> dict:
     :return: a dictionary with workflow run parameters
     """
 
-    params_file = get_path_to_pyflow() / "conf" / RUN_PARAMS_FILENAME
+    run_params_file = get_default_params_file()
 
-    with params_file.open() as f:
+    with run_params_file.open() as f:
         params = json.load(f)
 
     if program is None:
@@ -78,9 +79,19 @@ def load_workflow_params() -> dict:
 def get_path_to_pyflow() -> Path:
     """
     Returns a ``Path`` object which points to the ``PYFLOW`` environment variable.
+    ``PYFLOW`` should point to the directory containing the pyflow module.
+
     :return: a Path object with the path to ``PYFLOW``
     """
     return Path(os.environ["PYFLOW"])
+
+
+def get_default_config_file():
+    return get_path_to_pyflow() / "pyflow" / "conf" / CONFIG_FILE
+
+
+def get_default_params_file():
+    return get_path_to_pyflow() / "pyflow" / "conf" / RUN_PARAMS_FILENAME
 
 
 def get_num_conformers() -> int:

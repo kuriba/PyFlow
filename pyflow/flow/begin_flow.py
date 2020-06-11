@@ -1,4 +1,3 @@
-# TODO write begin_flow:
 import json
 from datetime import datetime
 from getpass import getuser
@@ -11,15 +10,15 @@ from pyflow.flow.flow_utils import load_workflow_params, WORKFLOW_PARAMS_FILENAM
 from pyflow.io.io_utils import upsearch
 
 
-def main():
+def begin_flow():
     # try to find workflow .params file
-    workflow_config_file = upsearch(WORKFLOW_PARAMS_FILENAME,
+    workflow_params_file = upsearch(WORKFLOW_PARAMS_FILENAME,
                                     message="Please execute this script in a workflow directory.")
 
     # read config_file and config_id from .params file
     workflow_params = load_workflow_params()
 
-    workflow_main_dir = workflow_config_file.parent
+    workflow_main_dir = workflow_params_file.parent
     workflow_id = workflow_main_dir.name
     config_file = Path(workflow_params["config_file"])
     config_id = workflow_params["config_id"]
@@ -33,7 +32,7 @@ def main():
         num_conformers = 1
 
     workflow_params["num_conformers"] = num_conformers
-    with workflow_config_file.open("w") as f:
+    with workflow_params_file.open("w") as f:
         f.write(json.dumps(workflow_params, indent=4))
 
     # workflow tracking
@@ -54,7 +53,3 @@ def main():
                              current_step_id=flow_config.get_initial_step_id(),
                              workflow_dir=workflow_main_dir)
     flow_runner.run(show_progress=True)
-
-
-if __name__ == "__main__":
-    main()

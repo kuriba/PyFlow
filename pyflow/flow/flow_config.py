@@ -3,7 +3,6 @@ from typing import List
 
 from pyflow.flow.flow_utils import load_run_params
 
-CONFIG_FILE = "flow_config.json"
 RUN_PARAMS = load_run_params()
 
 
