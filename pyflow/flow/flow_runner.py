@@ -374,7 +374,8 @@ class FlowRunner:
     @staticmethod
     def run_array_calc(step_id: str, task_id: int, timelimit: int = None):
         flow_runner = FlowRunner(current_step_id=step_id)
-        input_file = flow_runner.get_input_file(os.environ["SLURM_ARRAY_TASK_ID"])
+        array_task_id = int(os.environ["SLURM_ARRAY_TASK_ID"])
+        input_file = flow_runner.get_input_file(array_task_id)
 
         flow_runner.run_quantum_chem(input_file, timelimit)
 
