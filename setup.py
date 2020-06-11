@@ -1,5 +1,3 @@
-# TODO write setup.py; include entry points to allow easy access to scripts
-
 # TODO set user email
 
 import codecs
@@ -33,7 +31,7 @@ setup(
     version=get_version("pyflow/__init__.py"),
     author="Biruk Abreha",
     author_email="abreha.b@husky.neu.edu",  # TODO update author/email
-    description="A small example package",  # TODO update description
+    description="A generalized, automated program for running custom sequences of quantum chemistry calculations",
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/kuriba/PyFlow",
