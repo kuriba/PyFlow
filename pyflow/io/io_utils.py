@@ -64,7 +64,7 @@ def find_string(filepath: Path, search_string: str) -> List[str]:
     :param filepath: the path to the file to search
     :param search_string: the string to search for
     :return: a list of lines with matches
-    :raises FileNotFoundError:
+    :raises FileNotFoundError: if the given file does not exist
     """
     if filepath.is_file():
         matches = []
