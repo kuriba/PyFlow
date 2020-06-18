@@ -455,7 +455,7 @@ class FlowRunner:
         if self.step_program == "gaussian16":
             output_filepath = Path(output_file).resolve()
             matches = find_string(output_filepath, "Normal termination")
-            return matches == sum(self.current_step_config["opt"], self.current_step_config["freq"])
+            return matches == sum([self.current_step_config["opt"], self.current_step_config["freq"]])
         elif self.step_program == "gamess":
             pass
         else:
