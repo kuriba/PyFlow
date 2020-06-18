@@ -1,4 +1,5 @@
 import os
+import shutil
 import subprocess
 from linecache import getline
 from pathlib import Path
@@ -11,14 +12,14 @@ from pyflow.flow.flow_config import FlowConfig
 from pyflow.flow.flow_utils import get_num_conformers, load_workflow_params, WORKFLOW_PARAMS_FILENAME
 from pyflow.io.gamess_writer import GamessWriter
 from pyflow.io.gaussian_writer import GaussianWriter
-from pyflow.io.io_utils import upsearch
+from pyflow.io.io_utils import upsearch, find_string
 from pyflow.io.sbatch_writer import SbatchWriter
 from pyflow.mol.mol_utils import get_energy
 
 
 class FlowRunner:
     """
-    Class which handles moving molecules between workflow steps.
+    Class which handles running workflow steps.
     """
 
     PROGRAM_INFILE_EXTENSIONS = {"gaussian16": "com",
@@ -275,7 +276,7 @@ class FlowRunner:
 
         prev_step_id = self.get_prev_step_id()
         prev_program = self.flow_config.get_step(prev_step_id)["program"]
-        source_file_extension = FlowRunner.PROGRAM_OUTFILE_EXTENSIONS[prev_program]
+        source_file_ext = FlowRunner.PROGRAM_OUTFILE_EXTENSIONS[prev_program]
 
         # compile energies for the conformers
         uniq_inchi_keys = set()
@@ -302,7 +303,7 @@ class FlowRunner:
             lowest_energy_confs.append("{}_{}_{}.{}".format(inchi_key,
                                                             prev_step_id,
                                                             lowest_energy_conf_id,
-                                                            source_file_extension))
+                                                            source_file_ext))
 
         lowest_energy_source_files = []
         for f in source_files:
@@ -320,7 +321,7 @@ class FlowRunner:
         sbatch_filename = "{}.sbatch".format(self.current_step_id)
         sbatch_filepath = self.current_step_dir / sbatch_filename
 
-        sbatch_commands = self.get_run_commands()
+        sbatch_commands = self.get_commands()
 
         jobname = "{}_{}".format(self.workflow_dir.name, self.current_step_id)
 
@@ -335,8 +336,16 @@ class FlowRunner:
 
         return sbatch_writer
 
-    def get_run_commands(self) -> str:
-        run_command = Commands.get_run_command(self.current_step_id, self.current_step_config["timelim"])
+    def get_commands(self) -> str:
+        """
+        Retrieves the command strings used to create the Slurm submission script
+        for the current step. The commands make calls to ``pyflow`` to both run
+        calculations and handle outputs.
+
+        :return: a string of commands for run
+        """
+        run_command = Commands.get_run_command(self.current_step_id,
+                                               self.current_step_config["timelim"])
         job_handling = Commands.get_handle_command(self.current_step_id)
         commands = [run_command, job_handling]
 
@@ -364,33 +373,110 @@ class FlowRunner:
         return len(input_files)
 
     def queue_dependents(self):
-        dependents = self._get_dependents(self.current_step_id)
+        dependents = self.flow_config.get_dependents(self.current_step_id)
         for dependent in dependents:
             step_config = self.flow_config.get_step(dependent)
 
-    def _get_dependents(self, step_id):
-        return self.flow_config.get_dependents(step_id)
-
     @staticmethod
-    def run_array_calc(step_id: str, task_id: int, timelimit: int = None):
-        flow_runner = FlowRunner(current_step_id=step_id)
-        array_task_id = int(os.environ["SLURM_ARRAY_TASK_ID"])
-        input_file = flow_runner.get_input_file(array_task_id)
+    def run_array_calc(step_id: str, timelimit: int = None) -> None:
+        """
+        Static method for running a calculation as part of an array. This method
+        should only be called from within a Slurm array submission script as it
+        relies on the ``$SLURM_ARRAY_TASK_ID`` environment variable to determine
+        which array calculation to run.
 
+        :param step_id: the step ID to run
+        :param timelimit: time limit in minutes
+        :return: None
+        """
+        flow_runner = FlowRunner(current_step_id=step_id)
+        input_file = flow_runner.get_input_file()
         flow_runner.run_quantum_chem(input_file, timelimit)
 
-    def get_input_file(self, task_id: int) -> Path:
+    def get_input_file(self) -> Path:
+        """
+        Determines the input file based on the ``$SLURM_ARRAY_TASK_ID`` environment
+        variable.
+
+        :return: a Path object pointing to the input file
+        """
+        task_id = int(os.environ["SLURM_ARRAY_TASK_ID"])
         job_list_file = str(self.current_step_dir / "input_files.txt")
         input_file = Path(getline(job_list_file, task_id).strip()).resolve()
         return input_file
 
-    def run_quantum_chem(self, input_file: Path, timelimit: int) -> None:
+    def run_quantum_chem(self, input_file: Path, timelimit: int = None) -> None:
+        """
+        Runs a quantum chemistry calculation as a subprocess.
+
+        :param input_file: the input file to run
+        :param timelimit: time limit in minutes
+        :return: None
+        """
         qc_command = FlowRunner.PROGRAM_COMMANDS[self.step_program]
         working_dir = input_file.parent
-        if timelimit is None:
-            process = subprocess.run([qc_command, input_file],
-                                     cwd=working_dir)
+
+        updated_env = self._update_qc_environment()
+
+        if timelimit is not None:
+            timelimit = timelimit * 60
+
+        process = subprocess.run([qc_command, input_file],
+                                 timeout=timelimit,
+                                 cwd=working_dir,
+                                 env=updated_env,
+                                 shell=True)
+
+    def _update_qc_environment(self) -> dict:
+        """
+        Updates the current environment (``os.environ``) by adding additional,
+        program-specific environment variables
+
+        :return: a dict of environment variables
+        """
+        env = os.environ.copy()
+
+        if self.step_program == "gaussian16":
+            pass
+        elif self.step_program == "gamess":
+            pass
         else:
-            process = subprocess.run([qc_command, input_file],
-                                     timeout=timelimit * 60,
-                                     cwd=working_dir)
+            raise
+
+        return env
+
+    def is_complete(self, output_file: Path) -> bool:
+        """
+        Determines if the given output file completed successfully.
+
+        :param output_file: a Path object pointing to the output file
+        :return: True if successful, False otherwise
+        :raises AttributeError: if this method doesn't support the current step program
+        """
+        if self.step_program == "gaussian16":
+            output_filepath = Path(output_file).resolve()
+            matches = find_string(output_filepath, "Normal termination")
+            return matches == sum(self.current_step_config["opt"], self.current_step_config["freq"])
+        elif self.step_program == "gamess":
+            pass
+        else:
+            raise AttributeError("Unknown program: {}".format(self.step_program))
+
+    @staticmethod
+    def handle_array_output(step_id: str) -> None:
+        flow_runner = FlowRunner(current_step_id=step_id)
+        input_file = flow_runner.get_input_file()
+
+        in_file_ext = FlowRunner.PROGRAM_INFILE_EXTENSIONS[flow_runner.step_program]
+        out_file_ext = FlowRunner.PROGRAM_OUTFILE_EXTENSIONS[flow_runner.step_program]
+
+        output_file = str(input_file).replace(in_file_ext, out_file_ext)
+        output_file = Path(output_file).resolve()
+        if flow_runner.is_complete(output_file):
+            completed_dest = flow_runner.current_step_dir / "completed"
+            shutil.move(str(output_file), str(completed_dest))
+        elif flow_runner.current_step_config["attempt_restart"]:
+            pass
+
+    def restart_failed_calc(self):
+        pass  # TODO implement restart for failed calcs
