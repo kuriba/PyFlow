@@ -1,6 +1,7 @@
 import os
 import shutil
 import subprocess
+from glob import glob
 from linecache import getline
 from pathlib import Path
 from typing import List, Tuple
@@ -455,7 +456,7 @@ class FlowRunner:
         if self.step_program == "gaussian16":
             output_filepath = Path(output_file).resolve()
             matches = find_string(output_filepath, "Normal termination")
-            return matches == sum([self.current_step_config["opt"], self.current_step_config["freq"]])
+            return len(matches) == sum([self.current_step_config["opt"], self.current_step_config["freq"]])
         elif self.step_program == "gamess":
             pass
         else:
@@ -471,14 +472,31 @@ class FlowRunner:
 
         output_file = str(input_file).replace(in_file_ext, out_file_ext)
         output_file = Path(output_file).resolve()
-        print('OUTPUT_FILE: {}'.format(output_file))
         if flow_runner.is_complete(output_file):
-            print("IS COMPLETED...")
             completed_dest = flow_runner.current_step_dir / "completed"
-            print('COMPLETED_DEST: {}'.format(completed_dest))
-            shutil.move(str(output_file), str(completed_dest))
+
+            # move completed input/output files
+            for f in glob("{}*".format(output_file.with_suffix(""))):
+                shutil.move(f, str(completed_dest))
+
+            flow_runner._remove_array_files()
+
         elif flow_runner.current_step_config["attempt_restart"]:
             pass
+
+    def _remove_array_files(self) -> None:
+        """
+        Removes .o and .e files corresponding to the current ``$SLURM_ARRAY_JOB_ID``
+        and ``$SLURM_ARRAY_TASK_ID``.
+
+        :return: None
+        """
+        array_id = os.environ["SLURM_ARRAY_JOB_ID"]
+        task_id = os.environ["SLURM_ARRAY_TASK_ID"]
+
+        for ext in ["o", "e"]:
+            f = Path("{}_{}.{}".format(array_id, task_id, ext))
+            f.unlink()
 
     def restart_failed_calc(self):
         pass  # TODO implement restart for failed calcs
