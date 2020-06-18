@@ -50,8 +50,7 @@ class FlowConfig:
     # dict of required directories for step parameters
     REQUIRED_STEP_DIRS = {"all":
                               {"opt": ["completed", "failed_opt"],
-                               "freq": ["completed", "failed_freq",
-                                        "freq_calcs"]},
+                               "freq": ["completed", "failed_freq"]},
                           "gaussian16": {"attempt_restart": ["resubmits"]}}
 
     # dict of supported general configuration parameters and their expected types
@@ -61,7 +60,7 @@ class FlowConfig:
     # dict of all supported step parameters and their default values for each workflow step
     SUPPORTED_STEP_PARAMS = {"all":
                                  {"opt": True,
-                                  "freq": True,
+                                  "freq": False,
                                   "conformers": False,
                                   "proceed_on_failed_conf": True,
                                   "dependents": [],
@@ -71,7 +70,7 @@ class FlowConfig:
                                   "timelim_padding": RUN_PARAMS["slurm"]["timelim_padding"],
                                   "simul_jobs": 50},
                              "gaussian16":
-                                 {"route": "",
+                                 {"route": "#p",
                                   "attempt_restart": True,
                                   "nproc": RUN_PARAMS["gaussian16"]["nproc"],
                                   "memory": RUN_PARAMS["gaussian16"]["memory"],
