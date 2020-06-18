@@ -12,10 +12,10 @@ class Commands:
 
     @staticmethod
     def get_run_command(step_id: str, timelim: int):
-        command = "pyflow run --step_id \"{}\" --task_id \"$SLURM_ARRAY_TASK_ID\" --time {}"
+        command = "pyflow run --step_id \"{}\" --time {}"
         return command.format(step_id, timelim)
 
     @staticmethod
     def get_handle_command(step_id: str):
-        command = "pyflow handle --step_id \"{}\" --task_id \"$SLURM_ARRAY_TASK_ID\""
+        command = "pyflow handle --step_id \"{}\""
         return command.format(step_id)
