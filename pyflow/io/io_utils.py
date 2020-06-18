@@ -1,13 +1,13 @@
 from pathlib import Path
+from typing import List
 
 
-def remove_file(filepath: str, force: bool = False, message: str = None) -> \
-        bool:
+def remove_file(filepath: str, force: bool = False, message: str = None) -> bool:
     """
     Removes the specified file by first prompting the user with a yes/no query.
     If ``force == True``, the file is removed without prompting the user.
 
-    :param filename: path to the file to remove
+    :param filepath: path to the file to remove
     :param force: remove file without prompting user
     :param message: message with which to prompt user
     :return: a boolean indicating whether the file was removed
@@ -39,7 +39,6 @@ def upsearch(filename: str, start_dir: str = ".", message: str = None) -> Path:
     :return: the path to the file or directory
     :raises FileNotFoundError: if the file or directory is not found
     """
-
     cwd = Path(start_dir).resolve()
 
     while True:
@@ -58,6 +57,29 @@ def upsearch(filename: str, start_dir: str = ".", message: str = None) -> Path:
                 cwd = cwd.parent
 
 
+def find_string(filepath: Path, search_string: str) -> List[str]:
+    """
+    Searches for the given ``search_string`` in the file at the given path.
+
+    :param filepath: the path to the file to search
+    :param search_string: the string to search for
+    :return: a list of lines with matches
+    :raises FileNotFoundError:
+    """
+    if filepath.is_file():
+        matches = []
+
+        with filepath.open() as f:
+            for line in f:
+                if search_string in line:
+                    matches.append(line)
+
+        return matches
+
+    else:
+        raise FileNotFoundError("The file {} does not exist.".format(filepath))
+
+
 def yes_no_query(query: str) -> bool:
     """
     Performs a command line, yes/no query and returns ``True`` or ``False`` if
@@ -66,7 +88,6 @@ def yes_no_query(query: str) -> bool:
     :param query: the question to ask the user
     :return: True or False if the user replies yes or no, respectively
     """
-
     # valid answers
     valid = {"yes": True, "ye": True, "y": True,
              "no": False, "n": False}
