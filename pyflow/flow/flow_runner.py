@@ -471,8 +471,11 @@ class FlowRunner:
 
         output_file = str(input_file).replace(in_file_ext, out_file_ext)
         output_file = Path(output_file).resolve()
+        print('OUTPUT_FILE: {}'.format(output_file))
         if flow_runner.is_complete(output_file):
+            print("IS COMPLETED...")
             completed_dest = flow_runner.current_step_dir / "completed"
+            print('COMPLETED_DEST: {}'.format(completed_dest))
             shutil.move(str(output_file), str(completed_dest))
         elif flow_runner.current_step_config["attempt_restart"]:
             pass
