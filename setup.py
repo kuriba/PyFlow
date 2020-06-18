@@ -46,7 +46,7 @@ setup(
     install_requires=['tqdm'],
     entry_points={
         'console_scripts': [
-            'pyflow = pyflow.flow.command_line:main'
+            'pyflow = pyflow.flow.flow_action:main'
         ]
     }
 )
