@@ -424,13 +424,12 @@ class FlowRunner:
         process = subprocess.run([qc_command, input_file],
                                  timeout=timelimit,
                                  cwd=working_dir,
-                                 env=updated_env,
-                                 shell=True)
+                                 env=updated_env)
 
     def _update_qc_environment(self) -> dict:
         """
         Updates the current environment (``os.environ``) by adding additional,
-        program-specific environment variables
+        program-specific environment variables.
 
         :return: a dict of environment variables
         """
