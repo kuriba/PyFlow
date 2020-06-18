@@ -30,8 +30,7 @@ def get_formatted_geometry(geometry_file: str, output_format: str, geometry_form
     :param output_format: the desired output format
     :return: formatted geometry
     """
-
-    if not geometry_format:
+    if geometry_format is None:
         geometry_format = os.path.basename(geometry_file).split(".")[1]
 
     obConversion = openbabel.OBConversion()
@@ -49,6 +48,12 @@ def get_formatted_geometry(geometry_file: str, output_format: str, geometry_form
 
 
 def get_energy(output_file: str, format: str):
+    """
+
+    :param output_file:
+    :param format:
+    :return:
+    """
     # TODO implement get_energy
     if format == "gaussian16":
         pass
