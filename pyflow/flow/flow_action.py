@@ -129,12 +129,6 @@ class FlowAction:
             help="the step ID to run")
 
         parser.add_argument(
-            "-i", "--task_id",
-            type=int,
-            required=True,
-            help="the task ID of the desired molecule")
-
-        parser.add_argument(
             "-t", "--time",
             type=int,
             required=True,
@@ -143,7 +137,28 @@ class FlowAction:
 
         args = vars(parser.parse_args(sys.argv[2:]))
 
-        FlowRunner.run_array_calc(args["step_id"], args["task_id"], timelimit=args["timelimit"])
+        FlowRunner.run_array_calc(args["step_id"], timelimit=args["timelimit"])
+
+    def handle(self) -> None:
+        """
+        Handle processing of output from a quantum chemistry calculation run as
+        part of an array
+
+        :return: None
+        """
+        from pyflow.flow.flow_runner import FlowRunner
+
+        parser = argparse.ArgumentParser(description="Run quantum chemistry calculation")
+
+        parser.add_argument(
+            "-s", "--step_id",
+            type=str,
+            required=True,
+            help="the step ID to run")
+
+        args = vars(parser.parse_args(sys.argv[2:]))
+
+        FlowRunner.handle_array_output(args["step_id"])
 
 
 def main():
