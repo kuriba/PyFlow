@@ -10,19 +10,44 @@ from pyflow.flow.flow_utils import load_workflow_params, WORKFLOW_PARAMS_FILENAM
 from pyflow.io.io_utils import upsearch
 
 
-def begin_flow():
+def begin_step(step_id: str):
     # try to find workflow .params file
     workflow_params_file = upsearch(WORKFLOW_PARAMS_FILENAME,
                                     message="Please execute this script in a workflow directory.")
 
     # read config_file and config_id from .params file
     workflow_params = load_workflow_params()
-
     workflow_main_dir = workflow_params_file.parent
-    workflow_id = workflow_main_dir.name
     config_file = Path(workflow_params["config_file"])
     config_id = workflow_params["config_id"]
     flow_config = FlowConfig(config_file, config_id)
+
+    # validate step_id
+    if step_id is None:
+        step_id = flow_config.get_initial_step_id()
+    elif step_id not in flow_config.get_step_ids():
+        message = "Flow config defined in {} does not have a step '{}'".format(config_file, step_id)
+        raise AttributeError(message)
+
+    # do stuff on first step (tracking, workflow params modification)
+    if flow_config.get_initial_step_id() == step_id:
+        track_workflow(flow_config=flow_config,
+                       workflow_params=workflow_params,
+                       workflow_params_file=workflow_params_file,
+                       workflow_main_dir=workflow_main_dir)
+
+    # setup and start running workflow
+    flow_runner = FlowRunner(flow_config=flow_config,
+                             current_step_id=step_id,
+                             workflow_dir=workflow_main_dir)
+
+    flow_runner.run(show_progress=True)
+
+
+def track_workflow(flow_config: FlowConfig, workflow_params: dict,
+                   workflow_params_file: Path, workflow_main_dir: Path):
+    config_file = Path(workflow_params["config_file"])
+    config_id = workflow_params["config_id"]
 
     # add conformer information to .params file
     has_conformers = flow_config.get_step(flow_config.get_initial_step_id())["conformers"]
@@ -37,6 +62,7 @@ def begin_flow():
 
     # workflow tracking
     print("Tracking workflow...")
+    workflow_id = workflow_main_dir.name
     flow_tracker = FlowTracker(workflow_id=workflow_id)
 
     new_flow_info = {"config_file": config_file.as_posix(),
@@ -47,9 +73,3 @@ def begin_flow():
                      "submission_time": datetime.today().strftime("%H:%M:%S")}
 
     # TODO uncomment flow_tracker.track_new_flow(**new_flow_info)
-
-    # setup and start running workflow
-    flow_runner = FlowRunner(flow_config=flow_config,
-                             current_step_id=flow_config.get_initial_step_id(),
-                             workflow_dir=workflow_main_dir)
-    flow_runner.run(show_progress=True)
