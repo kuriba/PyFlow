@@ -402,13 +402,13 @@ class FlowRunner:
     def print_slurm_report():
         username = getuser()
 
-        info = OrderedDict([("CLUSTER_NAME", os.environ["SLURM_CLUSTER_NAME"]),
-                            ("SLURM_JOB_ID", os.environ["SLURM_JOB_ID"]),
-                            ("SLURM_ARRAY_JOB_ID", os.environ["SLURM_ARRAY_JOB_ID"]),
-                            ("SLURM_ARRAY_TASK_ID", os.environ["SLURM_ARRAY_TASK_ID"]),
-                            ("PARTITION", os.environ["SLURM_JOB_PARTITION"]),
-                            ("JOB_NAME", os.environ["SLURM_JOB_NAME"]),
-                            ("SLURM_JOB_NODELIST", os.environ["SLURM_JOB_NODELIST"]),
+        info = OrderedDict([("CLUSTER_NAME", os.getenv("SLURM_CLUSTER_NAME")),
+                            ("SLURM_JOB_ID", os.getenv("SLURM_JOB_ID")),
+                            ("SLURM_ARRAY_JOB_ID", os.getenv("SLURM_ARRAY_JOB_ID")),
+                            ("SLURM_ARRAY_TASK_ID", os.getenv("SLURM_ARRAY_TASK_ID")),
+                            ("PARTITION", os.getenv("SLURM_JOB_PARTITION")),
+                            ("JOB_NAME", os.getenv("SLURM_JOB_NAME")),
+                            ("SLURM_JOB_NODELIST", os.getenv("SLURM_JOB_NODELIST")),
                             ("GROUPS", [g.gr_name for g in grp.getgrall() if username in g.gr_mem]),
                             ("SUBMISSION_TIME", str(datetime.now()))])
 
