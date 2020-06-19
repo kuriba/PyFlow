@@ -10,7 +10,7 @@ from pyflow.io.file_writer import FileWriter
 
 class SbatchWriter(FileWriter):
     """
-
+    Class for writing Slurm submission scripts
     """
 
     def __init__(self,
@@ -48,6 +48,11 @@ class SbatchWriter(FileWriter):
         self.append("#!/bin/bash\n")
         self.append("#SBATCH -J {}\n".format(self.jobname))
 
+        if self.args["output"]:
+            self.append("#SBATCH -o {}\n".format(self.args["output"]))
+        if self.args["error"]:
+            self.append("#SBATCH -e {}\n".format(self.args["error"]))
+
         self.append("#SBATCH -N {}\n".format(self.args.get("nodes", 1)))
 
         if self.args["cores"]:
@@ -56,15 +61,22 @@ class SbatchWriter(FileWriter):
         if self.args["partition"]:
             self.append("#SBATCH -p {}\n".format(self.args["partition"]))
 
-        formatted_time = "{:0>2}:{:0>2}:00".format(*divmod(self.args["time"], 60))
-        self.append("#SBATCH --time={}\n".format(formatted_time))
+        if self.args["time"]:
+            formatted_time = "{:0>2}:{:0>2}:00".format(*divmod(self.args["time"], 60))
+            self.append("#SBATCH --time={}\n".format(formatted_time))
 
         if self.args["array"]:
             self.append("#SBATCH --array=1-{}%{}\n".format(self.args["array"], self.args["simul_jobs"]))
-            self.append("#SBATCH -o %A_%a.o\n#SBATCH -e %A_%a.e\n")
+            if not self.args["output"]:
+                self.append("#SBATCH -o %A_%a.o\n")
+            if not self.args["error"]:
+                self.append("#SBATCH -e %A_%a.e\n")
 
         if self.args["email"]:
             self.append("#SBATCH --mail-user={}\n#SBATCH --mail-type=END\n".format(self.args["email"]))
+
+        if self.args["dependency_type"]:
+            self.append("#SBATCH --dependency={}:{}\n".format(self.args["dependency_type"], self.args["dependency_id"]))
 
         self.append("\n" + self.commands + "\n")
 
@@ -126,7 +138,6 @@ def parse_args():
         "-mcpu", "--mem-per-cpu",
         type=int,
         help="amount of memory per CPU in gigabytes")
-
     parser.add_argument(
         "-a", "--array",
         type=int,
@@ -136,12 +147,19 @@ def parse_args():
         type=int,
         default=config["simul_jobs"],
         help="if setting up an array job, the size of the array")
-
     parser.add_argument(
         "-e", "--email",
         type=str,
         default=config["EMAIL"],
         help="email address to send job termination notification; default email if none given")
+    parser.add_argument(
+        "-d_type", "--dependency_type",
+        type=str,
+        help="type of Slurm dependency")
+    parser.add_argument(
+        "-d_id", "--dependency_id",
+        type=int,
+        help="job ID on which to create the dependency")
 
     # script to run
     parser.add_argument(
@@ -160,16 +178,25 @@ def parse_args():
         "-o", "--overwrite",
         action="store_true",
         help="overwrite sbatch file if exists")
+    parser.add_argument(
+        "-u", "--output",
+        type=str,
+        help="name of Slurm output file")
+    parser.add_argument(
+        "-r", "--error",
+        type=str,
+        help="name of Slurm error file")
 
     args = vars(parser.parse_args())
 
     return args
 
 
-# uses arguments to construct a Gaussian 16 input file
-def main(args):
-    # TODO write make_sbatch main(args) func
-    pass
+# uses arguments to construct a Slurm submission script
+def main(args: dict):
+    sbatch_writer = SbatchWriter(**args)
+
+    sbatch_writer.write()
 
 
 if __name__ == "__main__":
