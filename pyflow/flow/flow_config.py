@@ -49,8 +49,8 @@ class FlowConfig:
 
     # dict of required directories for step parameters
     REQUIRED_STEP_DIRS = {"all":
-                              {"opt": ["completed", "failed_opt"],
-                               "freq": ["completed", "failed_freq"]},
+                              {"opt": ["completed", "failed"],
+                               "freq": ["completed", "failed"]},
                           "gaussian16": {"attempt_restart": ["resubmits"]}}
 
     # dict of supported general configuration parameters and their expected types
