@@ -1,11 +1,15 @@
 import os
 import shutil
 import subprocess
+from collections import OrderedDict
+from datetime import datetime
+from getpass import getuser
 from glob import glob
 from linecache import getline
 from pathlib import Path
 from typing import List, Tuple
 
+import grp
 from tqdm import tqdm
 
 from pyflow.flow.commands import Commands
@@ -89,7 +93,7 @@ class FlowRunner:
 
         job_id = sbatch_file.submit()
 
-        # self.queue_dependents(job_id)
+        self.queue_dependents(job_id)
 
     def is_first_step(self) -> bool:
         """
@@ -315,14 +319,14 @@ class FlowRunner:
 
     def setup_sbatch_file(self, array_size) -> SbatchWriter:
         """
-        Creates an sbatch file for the current workflow step.
+        Creates an array sbatch file for the current workflow step.
 
         :return: an SbatchWriter object
         """
         sbatch_filename = "{}.sbatch".format(self.current_step_id)
         sbatch_filepath = self.current_step_dir / sbatch_filename
 
-        sbatch_commands = self.get_commands()
+        sbatch_commands = self.get_array_commands()
 
         jobname = "{}_{}".format(self.workflow_dir.name, self.current_step_id)
 
@@ -337,7 +341,7 @@ class FlowRunner:
 
         return sbatch_writer
 
-    def get_commands(self) -> str:
+    def get_array_commands(self) -> str:
         """
         Retrieves the command strings used to create the Slurm submission script
         for the current step. The commands make calls to ``pyflow`` to both run
@@ -373,10 +377,42 @@ class FlowRunner:
 
         return len(input_files)
 
-    def queue_dependents(self):
+    def queue_dependents(self, job_id: int):
         dependents = self.flow_config.get_dependents(self.current_step_id)
-        for dependent in dependents:
-            step_config = self.flow_config.get_step(dependent)
+        for dependent_id in dependents:
+            sbatch_filename = "{}_submitter.sbatch".format(dependent_id)
+
+            sbatch_filepath = self.workflow_dir / dependent_id / sbatch_filename
+
+            sbatch_commands = Commands.get_begin_step_command(dependent_id)
+
+            jobname = "{}_{}_submitter".format(self.workflow_dir.name, dependent_id)
+
+            sbatch_writer = SbatchWriter(jobname=jobname,
+                                         commands=sbatch_commands,
+                                         filepath=sbatch_filepath,
+                                         output="/dev/null",
+                                         error="/dev/null",
+                                         dependency_type="afterany",
+                                         dependency_id=job_id)
+            sbatch_writer.write()
+            sbatch_writer.submit()
+
+    @staticmethod
+    def print_slurm_report():
+        username = getuser()
+
+        info = OrderedDict([("CLUSTER_NAME", os.environ["SLURM_CLUSTER_NAME"]),
+                            ("SLURM_JOB_ID", os.environ["SLURM_JOB_ID"]),
+                            ("SLURM_ARRAY_JOB_ID", os.environ["SLURM_ARRAY_JOB_ID"]),
+                            ("SLURM_ARRAY_TASK_ID", os.environ["SLURM_ARRAY_TASK_ID"]),
+                            ("PARTITION", os.environ["SLURM_JOB_PARTITION"]),
+                            ("JOB_NAME", os.environ["SLURM_JOB_NAME"]),
+                            ("SLURM_JOB_NODELIST", os.environ["SLURM_JOB_NODELIST"]),
+                            ("GROUPS", [g.gr_name for g in grp.getgrall() if username in g.gr_mem]),
+                            ("SUBMISSION_TIME", str(datetime.now()))])
+
+        print(info)
 
     @staticmethod
     def run_array_calc(step_id: str, timelimit: int = None) -> None:
@@ -390,6 +426,7 @@ class FlowRunner:
         :param timelimit: time limit in minutes
         :return: None
         """
+        FlowRunner.print_slurm_report()
         flow_runner = FlowRunner(current_step_id=step_id)
         input_file = flow_runner.get_input_file()
         flow_runner.run_quantum_chem(input_file, timelimit)
@@ -435,14 +472,6 @@ class FlowRunner:
         :return: a dict of environment variables
         """
         env = os.environ.copy()
-
-        if self.step_program == "gaussian16":
-            pass
-        elif self.step_program == "gamess":
-            pass
-        else:
-            raise
-
         return env
 
     def is_complete(self, output_file: Path) -> bool:
@@ -453,17 +482,23 @@ class FlowRunner:
         :return: True if successful, False otherwise
         :raises AttributeError: if this method doesn't support the current step program
         """
+        output_filepath = Path(output_file).resolve()
         if self.step_program == "gaussian16":
-            output_filepath = Path(output_file).resolve()
             matches = find_string(output_filepath, "Normal termination")
             return len(matches) == sum([self.current_step_config["opt"], self.current_step_config["freq"]])
         elif self.step_program == "gamess":
-            pass
+            matches = find_string(output_filepath, "TERMINATED NORMALLY")
+            return len(matches) == sum([self.current_step_config["opt"]])
         else:
             raise AttributeError("Unknown program: {}".format(self.step_program))
 
     @staticmethod
     def handle_array_output(step_id: str) -> None:
+        """
+
+        :param step_id:
+        :return:
+        """
         flow_runner = FlowRunner(current_step_id=step_id)
         input_file = flow_runner.get_input_file()
 
@@ -472,6 +507,9 @@ class FlowRunner:
 
         output_file = str(input_file).replace(in_file_ext, out_file_ext)
         output_file = Path(output_file).resolve()
+
+        FlowRunner._rename_array_files(output_file.stem)
+
         if flow_runner.is_complete(output_file):
             completed_dest = flow_runner.current_step_dir / "completed"
 
@@ -479,12 +517,17 @@ class FlowRunner:
             for f in glob("{}*".format(output_file.with_suffix(""))):
                 shutil.move(f, str(completed_dest))
 
-            flow_runner._remove_array_files()
-
         elif flow_runner.current_step_config["attempt_restart"]:
-            pass
+            pass  # TODO implement restarting
+        else:
+            failed_dest = flow_runner.current_step_dir / "failed"
 
-    def _remove_array_files(self) -> None:
+            # move completed input/output files
+            for f in glob("{}*".format(output_file.with_suffix(""))):
+                shutil.move(f, str(failed_dest))
+
+    @staticmethod
+    def _remove_array_files() -> None:
         """
         Removes .o and .e files corresponding to the current ``$SLURM_ARRAY_JOB_ID``
         and ``$SLURM_ARRAY_TASK_ID``.
@@ -497,6 +540,21 @@ class FlowRunner:
         for ext in ["o", "e"]:
             f = Path("{}_{}.{}".format(array_id, task_id, ext))
             f.unlink()
+
+    @staticmethod
+    def _rename_array_files(name: str) -> None:
+        """
+        Renames the .o and .e files corresponding to the current ``$SLURM_ARRAY_JOB_ID``
+        and ``$SLURM_ARRAY_TASK_ID`` with the given name.
+
+        :return: None
+        """
+        array_id = os.environ["SLURM_ARRAY_JOB_ID"]
+        task_id = os.environ["SLURM_ARRAY_TASK_ID"]
+
+        for ext in ["o", "e"]:
+            f = Path("{}_{}.{}".format(array_id, task_id, ext))
+            f.rename("{}.{}".format(name, ext))
 
     def restart_failed_calc(self):
         pass  # TODO implement restart for failed calcs
