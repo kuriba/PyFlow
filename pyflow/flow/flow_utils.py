@@ -8,6 +8,7 @@ from pyflow.io.io_utils import upsearch
 CONFIG_FILE = "flow_config.json"
 RUN_PARAMS_FILENAME = "run_params.json"
 WORKFLOW_PARAMS_FILENAME = ".params"
+LONG_TERM_STORAGE = "/work/lopez/workflows/"
 
 
 def load_run_params(config_id: str = "default", program: str = None) -> dict:
@@ -108,3 +109,7 @@ def get_num_conformers() -> int:
     except KeyError:
         message = "'num_conformers' not yet defined in {}".format(WORKFLOW_PARAMS_FILENAME)
         raise KeyError(message)
+
+
+def copy_to_long_term_storage() -> None:
+    pass  # TODO implement copy_to_long_term_storage
