@@ -413,7 +413,7 @@ class FlowRunner:
                             ("GROUPS", [g.gr_name for g in grp.getgrall() if username in g.gr_mem]),
                             ("SUBMISSION_TIME", str(datetime.now()))])
 
-        print(json.dumps(info, indent=4))
+        print(json.dumps({"SLURM_REPORT": info}, indent=4))
 
     @staticmethod
     def run_array_calc(step_id: str, timelimit: int = None) -> None:
