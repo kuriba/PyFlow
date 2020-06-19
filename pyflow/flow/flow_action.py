@@ -108,9 +108,19 @@ class FlowAction:
 
         :return:
         """
-        from pyflow.flow.begin_flow import begin_flow
+        from pyflow.flow.begin_step import begin_step
 
-        begin_flow()
+        parser = argparse.ArgumentParser(description="Begin running a workflow step")
+
+        parser.add_argument(
+            "-s", "--step_id",
+            type=str,
+            required=False,
+            help="the step ID to run")
+
+        args = vars(parser.parse_args(sys.argv[2:]))
+
+        begin_step(step_id=args.get("step_id"))
 
     def run(self) -> None:
         """
