@@ -1,3 +1,4 @@
+import json
 import os
 import shutil
 import subprocess
@@ -412,7 +413,7 @@ class FlowRunner:
                             ("GROUPS", [g.gr_name for g in grp.getgrall() if username in g.gr_mem]),
                             ("SUBMISSION_TIME", str(datetime.now()))])
 
-        print(info)
+        print(json.dumps(info, indent=4))
 
     @staticmethod
     def run_array_calc(step_id: str, timelimit: int = None) -> None:
