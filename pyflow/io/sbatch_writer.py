@@ -144,7 +144,7 @@ def parse_args():
         type=int,
         help="if setting up an array job, the size of the array")
     parser.add_argument(
-        "-a", "--simul_jobs",
+        "--simul_jobs",
         type=int,
         default=config["simul_jobs"],
         help="if setting up an array job, the size of the array")
