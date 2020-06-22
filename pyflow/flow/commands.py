@@ -11,15 +11,15 @@ class Commands:
         subprocess.run([])
 
     @staticmethod
-    def get_run_command(step_id: str, timelim: int) -> str:
+    def get_run_command(step_id: str, time: int) -> str:
         """
         Command used for running an array calculation for the specified step ID.
         :param step_id:
-        :param timelim:
+        :param time:
         :return:
         """
         command = "pyflow run --step_id \"{}\" --time {}"
-        return command.format(step_id, timelim)
+        return command.format(step_id, time)
 
     @staticmethod
     def get_handle_command(step_id: str) -> str:
