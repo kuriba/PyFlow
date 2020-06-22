@@ -49,8 +49,8 @@ class GamessWriter(AbstractInputFileWriter):
         system_group = [" $SYSTEM"]
         if args["memory"]:
             system_group.append("MWORDS={}".format(args["memory"]))
-        if args["timelim"]:
-            system_group.append("TIMLIM={}".format(self.args["timelim"]))
+        if args["time"]:
+            system_group.append("TIMLIM={}".format(self.args["time"]))
         system_group.append("$END\n")
         if len(system_group) > 2:
             self.append(" ".join(system_group))
@@ -151,9 +151,9 @@ def parse_args():
               defined as 64 bits; 1 MWORD = 0.008 GB")
 
     system_group.add_argument(
-        "--timelim",
+        "--time",
         type=int,
-        default=default_params["timelim"],
+        default=default_params["time"],
         help="time limit, in minutes")
 
     # $BASIS section
