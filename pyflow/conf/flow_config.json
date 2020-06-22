@@ -35,7 +35,7 @@
       "sp-dft": {
         "program": "gaussian16",
         "route": "#p M06/6-31+G(d,p)",
-        "opt": true,
+        "single_point": true,
         "conformers": true
       }
     }
