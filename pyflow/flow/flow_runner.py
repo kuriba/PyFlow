@@ -141,11 +141,11 @@ class FlowRunner:
 
         return structure_files
 
-    def get_input_filenames(self, structure_files: List[Path], structure_dest: Path) -> List[Tuple[Path, Path]]:
+    def get_input_files(self, structure_files: List[Path], structure_dest: Path) -> List[Tuple[Path, Path]]:
         """
-        Returns a list of 2-tuples where the first element is a Path object of an
-        output file from the previous step, and the second element is a Path object
-        of the corresponding input file for the next step in the workflow.
+        Returns a list of 2-tuples where the first element is a Path object to
+        an input file for the next step in the workflow, and the  second element
+        is a Path object to the corresponding output file from the previous step.
 
         :param structure_files: a list of output files from the previous step
         :param structure_dest: the destination directory for the new input files
@@ -195,19 +195,22 @@ class FlowRunner:
 
         structure_dest = self.current_step_dir
 
-        input_filenames = self.get_input_filenames(structure_files, structure_dest)
+        input_files = self.get_input_files(structure_files, structure_dest)
 
         if show_progress:
-            input_filenames = tqdm(input_filenames, desc="Setting up input files...")
+            input_files = tqdm(input_files, desc="Setting up input files...")
 
-        for f in input_filenames:
-            print(f)
+        for f in input_files:
             input_filename = f[0]
             source_geometry = f[1]
+            inchi_key = input_filename.stem.split("_")[0]
+            unopt_pdb = self.workflow_dir / "unopt_pdbs" / "{}_0.pdb".format(inchi_key)
             input_writer = input_writer.from_config(step_config=self.current_step_config,
                                                     filepath=input_filename,
                                                     geometry_file=source_geometry,
-                                                    geometry_format=source_structure_format)
+                                                    geometry_format=source_structure_format,
+                                                    smiles_geometry_file=unopt_pdb,
+                                                    smiles_geometry_format="pdb")
             input_writer.write()
 
     def need_lowest_energy_confs(self) -> bool:
