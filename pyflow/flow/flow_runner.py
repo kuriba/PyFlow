@@ -201,6 +201,7 @@ class FlowRunner:
             input_filenames = tqdm(input_filenames, desc="Setting up input files...")
 
         for f in input_filenames:
+            print(f)
             input_filename = f[0]
             source_geometry = f[1]
             input_writer = input_writer.from_config(step_config=self.current_step_config,
