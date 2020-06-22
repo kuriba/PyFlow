@@ -7,7 +7,7 @@ from pyflow.flow.flow_utils import get_default_config_file
 
 class FlowAction:
     """
-    Class for  parsing and delegating ``pyflow`` commands to relevant functions
+    Class for parsing and delegating ``pyflow`` commands to relevant functions
     and classes. The ``pyflow`` command is specified as a ``console_scripts``
     entry point in ``setup.py``. Specifically, the ``pyflow`` command points to the
     :meth:`main<pyflow.flow.command_line.main>` function in :mod:`pyflow.flow.command_line`
@@ -142,12 +142,11 @@ class FlowAction:
             "-t", "--time",
             type=int,
             required=True,
-            dest="timelimit",
             help="time limit in minutes")
 
         args = vars(parser.parse_args(sys.argv[2:]))
 
-        FlowRunner.run_array_calc(args["step_id"], timelimit=args["timelimit"])
+        FlowRunner.run_array_calc(args["step_id"], time=args["time"])
 
     def handle(self) -> None:
         """
