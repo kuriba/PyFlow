@@ -370,11 +370,12 @@ class FlowRunner:
         input_files = self.current_step_dir.glob("*.{}".format(input_file_extension))
         input_files = [f.name for f in input_files]
         input_files.sort()
-        input_files_list = "\n".join(input_files)
+        input_files_string = "\n".join(input_files)
+        input_files_string += "\n"
 
         job_list_file = self.current_step_dir / "input_files.txt"
 
-        job_list_file.write_text(input_files_list)
+        job_list_file.write_text(input_files_string)
 
         return len(input_files)
 
