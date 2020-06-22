@@ -95,6 +95,10 @@ class AbstractInputFileWriter(FileWriter):
                 print(i)
             sys.exit()
 
+        for k, v in kwargs.items():
+            if k not in self.args:
+                self.args[k] = v
+
         # get formatted coordinates
         self.coordinates = get_formatted_geometry(str(self.args["geometry_file"]),
                                                   geometry_format=geometry_format,
@@ -103,17 +107,11 @@ class AbstractInputFileWriter(FileWriter):
         # charge and multiplicity
         if self.args.get("smiles_geometry_file") is None:
             self.args["smiles_geometry_file"] = self.args["geometry_file"]
-        print("SMILES GEOM FILE: ", self.args["smiles_geometry_file"])
-        print("SMILES_GEOMETRY_FORMAT: ", self.args.get("smiles_geometry_format"))
 
         smiles = mol_utils.get_smiles(str(self.args["smiles_geometry_file"]),
                                       geometry_format=self.args.get("smiles_geometry_format"))
 
         self.args["charge"] = mol_utils.get_charge(smiles) + self.args.get("charge", 0)
-
-        for k, v in kwargs.items():
-            if k not in self.args:
-                self.args[k] = v
 
     @classmethod
     def from_config(cls,
@@ -122,7 +120,6 @@ class AbstractInputFileWriter(FileWriter):
                     geometry_file: Path,
                     geometry_format: str,
                     **kwargs) -> AbstractInputFileWriter:
-        print("from_config KWARGS: ", kwargs)
         return cls(filepath=filepath,
                    geometry_file=geometry_file,
                    geometry_format=geometry_format,
