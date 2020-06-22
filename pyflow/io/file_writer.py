@@ -101,7 +101,7 @@ class AbstractInputFileWriter(FileWriter):
                                                   output_format=self.get_openbabel_format())
 
         # charge and multiplicity
-        if self.args.get(["smiles_geometry_file"]) is None:
+        if self.args.get("smiles_geometry_file") is None:
             self.args["smiles_geometry_file"] = self.args["geometry_file"]
 
         smiles = mol_utils.get_smiles(str(self.args["smiles_geometry_file"]),
