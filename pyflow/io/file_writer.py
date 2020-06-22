@@ -104,6 +104,7 @@ class AbstractInputFileWriter(FileWriter):
         if self.args.get("smiles_geometry_file") is None:
             self.args["smiles_geometry_file"] = self.args["geometry_file"]
         print("SMILES GEOM FILE: ", self.args["smiles_geometry_file"])
+        print("SMILES_GEOMETRY_FORMAT: ", self.args.get("smiles_geometry_format"))
 
         smiles = mol_utils.get_smiles(str(self.args["smiles_geometry_file"]),
                                       geometry_format=self.args.get("smiles_geometry_format"))
@@ -121,6 +122,7 @@ class AbstractInputFileWriter(FileWriter):
                     geometry_file: Path,
                     geometry_format: str,
                     **kwargs) -> AbstractInputFileWriter:
+        print("from_config KWARGS: ", kwargs)
         return cls(filepath=filepath,
                    geometry_file=geometry_file,
                    geometry_format=geometry_format,
