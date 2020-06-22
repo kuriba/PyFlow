@@ -86,7 +86,7 @@ class FlowConfig:
                                   "timelim": RUN_PARAMS["gamess"]["timelim"],
                                   "runtyp": "OPTIMIZE",
                                   "dfttyp": "NONE",
-                                  "maxit": RUN_PARAMS["gamess"]["maxit"],
+                                  "maxit": 200,
                                   "gbasis": "",
                                   "opttol": 0.0005,
                                   "hess": "CALC",
