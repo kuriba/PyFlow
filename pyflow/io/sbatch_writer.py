@@ -48,9 +48,9 @@ class SbatchWriter(FileWriter):
         self.append("#!/bin/bash\n")
         self.append("#SBATCH -J {}\n".format(self.jobname))
 
-        if self.args["output"]:
+        if self.args.get("output"):
             self.append("#SBATCH -o {}\n".format(self.args["output"]))
-        if self.args["error"]:
+        if self.args.get("error"):
             self.append("#SBATCH -e {}\n".format(self.args["error"]))
 
         self.append("#SBATCH -N {}\n".format(self.args.get("nodes", 1)))
