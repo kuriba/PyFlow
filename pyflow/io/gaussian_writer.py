@@ -21,8 +21,11 @@ class GaussianWriter(AbstractInputFileWriter):
         coordinates = self.coordinates.split("\n", 2)[2]
 
         # charge and multiplicity
-        smiles = mol_utils.get_smiles(str(self.args["geometry_file"]), geometry_format=self.args.get("geometry_format"))
-        print("SMILES: ", smiles)
+        if self.args.get(["smiles_geometry_file"]) is None:
+            self.args["smiles_geometry_file"] = self.args["geometry_file"]
+
+        smiles = mol_utils.get_smiles(str(self.args["smiles_geometry_file"]),
+                                      geometry_format=self.args.get("smiles_geometry_format"))
         charge = mol_utils.get_charge(smiles) + self.args["charge"]
 
         # link 0 commands
@@ -125,6 +128,12 @@ def parse_args():
         "-g", "--geometry_file",
         type=str,
         help="path to geometry file",
+        default=argparse.SUPPRESS,
+        required="--formats" not in sys.argv and "-f" not in sys.argv)
+    molecule_options.add_argument(
+        "--smiles_geometry_file",
+        type=str,
+        help="path to geometry file to used to determine the charge",
         default=argparse.SUPPRESS,
         required="--formats" not in sys.argv and "-f" not in sys.argv)
     molecule_options.add_argument(
