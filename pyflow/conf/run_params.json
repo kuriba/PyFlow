@@ -3,19 +3,19 @@
     "slurm": {
       "email": null,
       "partition": "short",
-      "timelim_padding": 40,
+      "time_padding": 40,
       "simul_jobs": 50,
       "nodes": 1
     },
     "gaussian16": {
       "nproc": 14,
       "memory": 8,
-      "timelim": 1400
+      "time": 1400
     },
     "gamess": {
       "nproc": 14,
       "memory": 1000,
-      "timelim": 1400
+      "time": 1400
     }
   }
 }
