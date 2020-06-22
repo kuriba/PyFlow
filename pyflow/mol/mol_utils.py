@@ -26,8 +26,8 @@ def get_formatted_geometry(geometry_file: str, output_format: str, geometry_form
     <https://open-babel.readthedocs.io/en/latest/FileFormats/Overview.html>`_.
 
     :param geometry_file: the path to the input geometry file
-    :param geometry_format: the input geometry file format
     :param output_format: the desired output format
+    :param geometry_format: the format of the input geometry file
     :return: formatted geometry
     """
     if geometry_format is None:
