@@ -459,7 +459,7 @@ class FlowRunner:
         if time is not None:
             time = time * 60
 
-        process = subprocess.run([qc_command, input_file],
+        process = subprocess.run([qc_command, input_file.name],
                                  timeout=time,
                                  cwd=working_dir,
                                  env=updated_env)
