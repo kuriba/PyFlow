@@ -4,6 +4,7 @@ import sys
 from pathlib import Path
 
 from pyflow.io.io_utils import yes_no_query
+from pyflow.mol import mol_utils
 from pyflow.mol.mol_utils import get_formatted_geometry, get_supported_babel_formats
 
 
@@ -98,6 +99,15 @@ class AbstractInputFileWriter(FileWriter):
         self.coordinates = get_formatted_geometry(str(self.args["geometry_file"]),
                                                   geometry_format=geometry_format,
                                                   output_format=self.get_openbabel_format())
+
+        # charge and multiplicity
+        if self.args.get(["smiles_geometry_file"]) is None:
+            self.args["smiles_geometry_file"] = self.args["geometry_file"]
+
+        smiles = mol_utils.get_smiles(str(self.args["smiles_geometry_file"]),
+                                      geometry_format=self.args.get("smiles_geometry_format"))
+
+        self.args["charge"] = mol_utils.get_charge(smiles) + self.args.get("charge", 0)
 
         for k, v in kwargs.items():
             if k not in self.args:

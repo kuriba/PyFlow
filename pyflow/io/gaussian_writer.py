@@ -6,7 +6,6 @@ from pathlib import Path
 
 from pyflow.flow.flow_utils import load_run_params
 from pyflow.io.file_writer import AbstractInputFileWriter
-from pyflow.mol import mol_utils
 
 
 class GaussianWriter(AbstractInputFileWriter):
@@ -19,14 +18,6 @@ class GaussianWriter(AbstractInputFileWriter):
 
         # remove charge/multiplicity from OpenBabel generated coordinates
         coordinates = self.coordinates.split("\n", 2)[2]
-
-        # charge and multiplicity
-        if self.args.get(["smiles_geometry_file"]) is None:
-            self.args["smiles_geometry_file"] = self.args["geometry_file"]
-
-        smiles = mol_utils.get_smiles(str(self.args["smiles_geometry_file"]),
-                                      geometry_format=self.args.get("smiles_geometry_format"))
-        charge = mol_utils.get_charge(smiles) + self.args["charge"]
 
         # link 0 commands
         if self.args["rwf"] and self.args["chk"]:  # save rwf and chk file
@@ -46,7 +37,7 @@ class GaussianWriter(AbstractInputFileWriter):
         # route, title, charge, and multiplicity
         self.append("{}\n\n".format(self.args["route"]))
         self.append("{}\n\n".format(self.args["title"]))
-        self.append("{} {}\n".format(charge, self.args["multiplicity"]))
+        self.append("{} {}\n".format(self.args["charge"], self.args["multiplicity"]))
 
         # coordinates
         self.append("{}\n".format(coordinates))

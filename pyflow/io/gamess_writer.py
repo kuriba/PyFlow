@@ -6,7 +6,6 @@ from pathlib import Path
 
 from pyflow.flow.flow_utils import load_run_params
 from pyflow.io.file_writer import AbstractInputFileWriter
-from pyflow.mol import mol_utils
 
 
 # script for creating GAMESS input files
@@ -22,10 +21,6 @@ class GamessWriter(AbstractInputFileWriter):
         # reformat coordinates
         coordinates = "\n".join([" $DATA", self.args["title"], self.coordinates.split("\n", 4)[4]])
 
-        # charge and multiplicity
-        smiles = mol_utils.get_smiles(str(self.args["geometry_file"]), geometry_format=self.args.get("geometry_format"))
-        charge = mol_utils.get_charge(smiles) + self.args["charge"]
-
         # $CONTRL group
         control_group = [" $CONTRL"]
 
@@ -33,8 +28,8 @@ class GamessWriter(AbstractInputFileWriter):
             control_group.append("RUNTYP={}".format(self.args["runtyp"]))
         if self.args["dfttyp"] is not None:
             control_group.append("DFTTYP={}".format(self.args["dfttyp"]))
-        if charge != 0:
-            control_group.append("ICHARG={}".format(charge))
+        if self.args["charge"] != 0:
+            control_group.append("ICHARG={}".format(self.args["charge"]))
         if self.args["multiplicity"] is not None:
             control_group.append("MULT={}".format(self.args["multiplicity"]))
         if self.args["maxit"] is not None:
