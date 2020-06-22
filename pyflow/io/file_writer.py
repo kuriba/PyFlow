@@ -119,7 +119,7 @@ class AbstractInputFileWriter(FileWriter):
                     filepath: Path,
                     geometry_file: Path,
                     geometry_format: str,
-                    kwargs) -> AbstractInputFileWriter:
+                    **kwargs) -> AbstractInputFileWriter:
         return cls(filepath=filepath,
                    geometry_file=geometry_file,
                    geometry_format=geometry_format,
