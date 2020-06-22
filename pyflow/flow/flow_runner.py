@@ -369,6 +369,7 @@ class FlowRunner:
         input_file_extension = FlowRunner.PROGRAM_INFILE_EXTENSIONS[self.step_program]
         input_files = self.current_step_dir.glob("*.{}".format(input_file_extension))
         input_files = [f.name for f in input_files]
+        input_files.sort()
         input_files_list = "\n".join(input_files)
 
         job_list_file = self.current_step_dir / "input_files.txt"
