@@ -12,7 +12,7 @@ def get_charge(smiles: str) -> int:
     :param smiles: the SMILES string of the molecule
     :return: the charge of the molecule
     """
-    mol = Chem.MolFromSmiles(smiles, sanitize=False)
+    mol = Chem.MolFromSmiles(smiles, sanitize=True)
     return Chem.GetFormalCharge(mol)
 
 
