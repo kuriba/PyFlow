@@ -35,7 +35,7 @@ class SbatchWriter(FileWriter):
                     jobname: str,
                     **kwargs) -> SbatchWriter:
 
-        time = step_config.pop("timelim") + step_config.pop("time_padding")
+        time = step_config.pop("time") + step_config.pop("time_padding")
 
         return cls(filepath=filepath,
                    jobname=jobname,
