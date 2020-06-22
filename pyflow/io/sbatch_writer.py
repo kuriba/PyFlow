@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import subprocess
+import sys
 from pathlib import Path
 
 from pyflow.flow.flow_utils import load_run_params
@@ -55,27 +56,27 @@ class SbatchWriter(FileWriter):
 
         self.append("#SBATCH -N {}\n".format(self.args.get("nodes", 1)))
 
-        if self.args["cores"]:
+        if self.args.get("cores"):
             self.append("#SBATCH -n {}\n".format(self.args["cores"]))
 
-        if self.args["partition"]:
+        if self.args.get("partition"):
             self.append("#SBATCH -p {}\n".format(self.args["partition"]))
 
-        if self.args["time"]:
+        if self.args.get("time"):
             formatted_time = "{:0>2}:{:0>2}:00".format(*divmod(self.args["time"], 60))
             self.append("#SBATCH --time={}\n".format(formatted_time))
 
-        if self.args["array"]:
+        if self.args.get("array"):
             self.append("#SBATCH --array=1-{}%{}\n".format(self.args["array"], self.args["simul_jobs"]))
             if not self.args.get("output"):
                 self.append("#SBATCH -o %A_%a.o\n")
             if not self.args.get("error"):
                 self.append("#SBATCH -e %A_%a.e\n")
 
-        if self.args["email"]:
+        if self.args.get("email"):
             self.append("#SBATCH --mail-user={}\n#SBATCH --mail-type=END\n".format(self.args["email"]))
 
-        if self.args["dependency_type"]:
+        if self.args.get("dependency_type"):
             self.append("#SBATCH --dependency={}:{}\n".format(self.args["dependency_type"], self.args["dependency_id"]))
 
         self.append("\n" + self.commands + "\n")
@@ -159,6 +160,7 @@ def parse_args():
     parser.add_argument(
         "-d_id", "--dependency_id",
         type=int,
+        required="dependency_type" in sys.argv,
         help="job ID on which to create the dependency")
 
     # script to run
