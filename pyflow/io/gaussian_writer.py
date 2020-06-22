@@ -21,7 +21,7 @@ class GaussianWriter(AbstractInputFileWriter):
         coordinates = self.coordinates.split("\n", 2)[2]
 
         # charge and multiplicity
-        smiles = mol_utils.get_smiles(str(self.args["geometry_file"]))
+        smiles = mol_utils.get_smiles(str(self.args["geometry_file"]), geometry_format=self.args.get("geometry_format"))
         charge = mol_utils.get_charge(smiles) + self.args["charge"]
 
         # link 0 commands
