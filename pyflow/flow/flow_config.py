@@ -74,7 +74,7 @@ class FlowConfig:
                                   "simul_jobs": 50},
                              "gaussian16":
                                  {"route": "#p",
-                                  "attempt_restart": True,
+                                  "attempt_restart": False,
                                   "nproc": RUN_PARAMS["gaussian16"]["nproc"],
                                   "memory": RUN_PARAMS["gaussian16"]["memory"],
                                   "time": RUN_PARAMS["gaussian16"]["time"],
