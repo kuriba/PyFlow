@@ -42,7 +42,8 @@ def get_formatted_geometry(geometry_file: str, output_format: str, geometry_form
     formatted_output = obConversion.WriteString(mol)
 
     if formatted_output == "":
-        raise Exception("Unsupported input geometry format: {}".format(geometry_format))
+        message = "Unsupported input geometry format: {}".format(geometry_format)
+        raise AttributeError(message)
 
     return formatted_output
 
