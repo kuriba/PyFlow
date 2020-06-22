@@ -50,7 +50,8 @@ class FlowConfig:
     # dict of required directories for step parameters
     REQUIRED_STEP_DIRS = {"all":
                               {"opt": ["completed", "failed"],
-                               "freq": ["completed", "failed"]},
+                               "freq": ["completed", "failed"],
+                               "single_point": ["completed", "failed"]},
                           "gaussian16": {"attempt_restart": ["resubmits"]}}
 
     # dict of supported general configuration parameters and their expected types
@@ -61,12 +62,14 @@ class FlowConfig:
     SUPPORTED_STEP_PARAMS = {"all":
                                  {"opt": True,
                                   "freq": False,
+                                  "single_point": False,
                                   "conformers": False,
                                   "proceed_on_failed_conf": True,
                                   "dependents": [],
                                   "charge": 0,
                                   "multiplicity": 1,
                                   "save_output": True,
+                                  "partition": "short",
                                   "timelim_padding": RUN_PARAMS["slurm"]["timelim_padding"],
                                   "simul_jobs": 50},
                              "gaussian16":
@@ -80,7 +83,15 @@ class FlowConfig:
                              "gamess":
                                  {"memory": RUN_PARAMS["gamess"]["memory"],
                                   "nproc": RUN_PARAMS["gamess"]["nproc"],
-                                  "timelim": RUN_PARAMS["gamess"]["timelim"]}}
+                                  "timelim": RUN_PARAMS["gamess"]["timelim"],
+                                  "runtyp": "OPTIMIZE",
+                                  "dfttyp": "NONE",
+                                  "maxit": RUN_PARAMS["gamess"]["maxit"],
+                                  "gbasis": "",
+                                  "opttol": 0.0005,
+                                  "hess": "CALC",
+                                  "nstep": 400,
+                                  "idcver": 3}}
 
     def __init__(self, config_file: str, config_id: str):
         """
