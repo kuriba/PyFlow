@@ -67,9 +67,9 @@ class SbatchWriter(FileWriter):
 
         if self.args["array"]:
             self.append("#SBATCH --array=1-{}%{}\n".format(self.args["array"], self.args["simul_jobs"]))
-            if not self.args["output"]:
+            if not self.args.get("output"):
                 self.append("#SBATCH -o %A_%a.o\n")
-            if not self.args["error"]:
+            if not self.args.get("error"):
                 self.append("#SBATCH -e %A_%a.e\n")
 
         if self.args["email"]:
