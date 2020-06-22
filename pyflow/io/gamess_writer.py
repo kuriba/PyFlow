@@ -47,9 +47,9 @@ class GamessWriter(AbstractInputFileWriter):
 
         # $SYSTEM group
         system_group = [" $SYSTEM"]
-        if args["memory"]:
-            system_group.append("MWORDS={}".format(args["memory"]))
-        if args["time"]:
+        if self.args["memory"]:
+            system_group.append("MWORDS={}".format(self.args["memory"]))
+        if self.args["time"]:
             system_group.append("TIMLIM={}".format(self.args["time"]))
         system_group.append("$END\n")
         if len(system_group) > 2:
@@ -215,19 +215,19 @@ def parse_args():
     return args
 
 
-# uses arguments to construct a Gaussian 16 input file
+# uses arguments to construct a GAMESS input file
 def main(args: dict) -> None:
     if args["title"] is None:
         args["title"] = Path(args["geometry_file"]).stem
 
     filepath = Path(args.pop("location")).resolve() / "{}.inp".format(args["title"])
 
-    gaussian_writer = GamessWriter(geometry_file=args.pop("geometry_file"),
-                                   geometry_format=args.pop("geometry_format"),
-                                   filepath=filepath,
-                                   overwrite_mode=args.pop("overwrite"),
-                                   **args)
-    gaussian_writer.write()
+    gamess_writer = GamessWriter(geometry_file=args.pop("geometry_file"),
+                                 geometry_format=args.pop("geometry_format"),
+                                 filepath=filepath,
+                                 overwrite_mode=args.pop("overwrite"),
+                                 **args)
+    gamess_writer.write()
 
 
 if __name__ == "__main__":
