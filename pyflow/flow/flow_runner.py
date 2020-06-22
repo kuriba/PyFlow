@@ -336,8 +336,7 @@ class FlowRunner:
                                                  jobname=jobname,
                                                  array=array_size,
                                                  commands=sbatch_commands,
-                                                 cores=self.current_step_config["nproc"],
-                                                 time=self.current_step_config["timelim"])
+                                                 cores=self.current_step_config["nproc"])
         sbatch_writer.write()
 
         return sbatch_writer
@@ -351,7 +350,7 @@ class FlowRunner:
         :return: a string of commands for run
         """
         run_command = Commands.get_run_command(self.current_step_id,
-                                               self.current_step_config["timelim"])
+                                               self.current_step_config["time"])
         job_handling = Commands.get_handle_command(self.current_step_id)
         commands = [run_command, job_handling]
 
@@ -416,7 +415,7 @@ class FlowRunner:
         print(json.dumps({"SLURM_REPORT": info}, indent=4))
 
     @staticmethod
-    def run_array_calc(step_id: str, timelimit: int = None) -> None:
+    def run_array_calc(step_id: str, time: int = None) -> None:
         """
         Static method for running a calculation as part of an array. This method
         should only be called from within a Slurm array submission script as it
@@ -424,13 +423,13 @@ class FlowRunner:
         which array calculation to run.
 
         :param step_id: the step ID to run
-        :param timelimit: time limit in minutes
+        :param time: time limit in minutes
         :return: None
         """
         FlowRunner.print_slurm_report()
         flow_runner = FlowRunner(current_step_id=step_id)
         input_file = flow_runner.get_input_file()
-        flow_runner.run_quantum_chem(input_file, timelimit)
+        flow_runner.run_quantum_chem(input_file, time)
 
     def get_input_file(self) -> Path:
         """
@@ -444,12 +443,12 @@ class FlowRunner:
         input_file = Path(getline(job_list_file, task_id).strip()).resolve()
         return input_file
 
-    def run_quantum_chem(self, input_file: Path, timelimit: int = None) -> None:
+    def run_quantum_chem(self, input_file: Path, time: int = None) -> None:
         """
         Runs a quantum chemistry calculation as a subprocess.
 
         :param input_file: the input file to run
-        :param timelimit: time limit in minutes
+        :param time: time limit in minutes
         :return: None
         """
         qc_command = FlowRunner.PROGRAM_COMMANDS[self.step_program]
@@ -457,11 +456,11 @@ class FlowRunner:
 
         updated_env = self._update_qc_environment()
 
-        if timelimit is not None:
-            timelimit = timelimit * 60
+        if time is not None:
+            time = time * 60
 
         process = subprocess.run([qc_command, input_file],
-                                 timeout=timelimit,
+                                 timeout=time,
                                  cwd=working_dir,
                                  env=updated_env)
 
