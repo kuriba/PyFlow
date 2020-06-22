@@ -203,10 +203,10 @@ class FlowRunner:
         for f in input_filenames:
             input_filename = f[0]
             source_geometry = f[1]
-            input_writer = input_writer.from_config(self.current_step_config,
-                                                    input_filename,
-                                                    source_geometry,
-                                                    source_structure_format)
+            input_writer = input_writer.from_config(step_config=self.current_step_config,
+                                                    filepath=input_filename,
+                                                    geometry_file=source_geometry,
+                                                    geometry_format=source_structure_format)
             input_writer.write()
 
     def need_lowest_energy_confs(self) -> bool:
