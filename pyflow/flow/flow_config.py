@@ -81,7 +81,8 @@ class FlowConfig:
                                   "rwf": False,
                                   "chk": False},
                              "gamess":
-                                 {"memory": RUN_PARAMS["gamess"]["memory"],
+                                 {"attempt_restart": False,
+                                  "memory": RUN_PARAMS["gamess"]["memory"],
                                   "nproc": RUN_PARAMS["gamess"]["nproc"],
                                   "time": RUN_PARAMS["gamess"]["time"],
                                   "runtyp": "OPTIMIZE",
