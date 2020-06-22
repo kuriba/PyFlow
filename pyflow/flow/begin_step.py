@@ -10,7 +10,7 @@ from pyflow.flow.flow_utils import load_workflow_params, WORKFLOW_PARAMS_FILENAM
 from pyflow.io.io_utils import upsearch
 
 
-def begin_step(step_id: str):
+def begin_step(step_id: str = None, show_progress: bool = False):
     # try to find workflow .params file
     workflow_params_file = upsearch(WORKFLOW_PARAMS_FILENAME,
                                     message="Please execute this script in a workflow directory.")
@@ -35,13 +35,14 @@ def begin_step(step_id: str):
                        workflow_params=workflow_params,
                        workflow_params_file=workflow_params_file,
                        workflow_main_dir=workflow_main_dir)
+        show_progress = True
 
     # setup and start running workflow
     flow_runner = FlowRunner(flow_config=flow_config,
                              current_step_id=step_id,
                              workflow_dir=workflow_main_dir)
 
-    flow_runner.run(show_progress=True)
+    flow_runner.run(show_progress=show_progress)
 
 
 def track_workflow(flow_config: FlowConfig, workflow_params: dict,
