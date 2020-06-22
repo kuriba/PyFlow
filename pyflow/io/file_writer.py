@@ -118,11 +118,13 @@ class AbstractInputFileWriter(FileWriter):
                     step_config: dict,
                     filepath: Path,
                     geometry_file: Path,
-                    geometry_format: str) -> AbstractInputFileWriter:
+                    geometry_format: str,
+                    kwargs) -> AbstractInputFileWriter:
         return cls(filepath=filepath,
                    geometry_file=geometry_file,
                    geometry_format=geometry_format,
-                   **step_config)
+                   **step_config,
+                   **kwargs)
 
     @classmethod
     def get_openbabel_format(self) -> str:
