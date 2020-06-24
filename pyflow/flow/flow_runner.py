@@ -204,12 +204,12 @@ class FlowRunner:
             input_filename = f[0]
             source_geometry = f[1]
             inchi_key = input_filename.stem.split("_")[0]
-            unopt_pdb = self.workflow_dir / "unopt_pdbs" / "{}_0.pdb".format(inchi_key)
+            unopt_pdb_file = self.workflow_dir / "unopt_pdbs" / "{}_0.pdb".format(inchi_key)
             input_writer = input_writer.from_config(step_config=self.current_step_config,
                                                     filepath=input_filename,
                                                     geometry_file=source_geometry,
                                                     geometry_format=source_structure_format,
-                                                    smiles_geometry_file=unopt_pdb,
+                                                    smiles_geometry_file=unopt_pdb_file,
                                                     smiles_geometry_format="pdb")
             input_writer.write()
 
