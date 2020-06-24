@@ -1,8 +1,11 @@
 import os
 from openbabel import openbabel
+from pathlib import Path
 from typing import List
 
 from rdkit import Chem
+
+from pyflow.io.io_utils import find_string
 
 
 def get_charge(smiles: str) -> int:
@@ -48,20 +51,22 @@ def get_formatted_geometry(geometry_file: str, output_format: str, geometry_form
     return formatted_output
 
 
-def get_energy(output_file: str, format: str):
+def get_energy(output_file: str, format: str, excited_state: bool = False) -> float:
     """
-
-    :param output_file:
-    :param format:
-    :return:
+    Returns the energy from the given output file in units of electronvolts (eV).
+    :param output_file: the path to the output file
+    :param format: the format of the output file
+    :param excited_state: whether to extract excited state energy
+    :return: an energy in eV
     """
-    # TODO implement get_energy
     if format == "gaussian16":
-        pass
+        energy_line = find_string(Path(output_file).resolve(), "SCF Done")[-1]
+        energy = float(energy_line.split("A.U.")[0].split()[-1]) * 27.2113246
     elif format == "gamess":
-        pass
+        raise NotImplementedError("GAMESS get_energy not implemented")
     else:
-        raise NotImplementedError("Unable to obtain energy from file format '{}'".format(format))
+        raise AttributeError("Unable to obtain energy from file format '{}'".format(format))
+    return energy
 
 
 def get_smiles(geometry_file: str, geometry_format: str = None) -> str:
