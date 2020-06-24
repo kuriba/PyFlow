@@ -37,7 +37,10 @@
         "program": "gaussian16",
         "route": "#p M06/6-31+G(d,p)",
         "single_point": true,
-        "conformers": true
+        "conformers": true,
+        "dependents": [
+          "s0_vac"
+        ]
       },
       "s0_vac": {
         "program": "gaussian16",
