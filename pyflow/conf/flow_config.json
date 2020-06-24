@@ -28,6 +28,7 @@
         "program": "gamess",
         "gbasis": "RM1",
         "conformers": true,
+        "proceed_on_failed_conf": false,
         "dependents": [
           "sp-dft"
         ]
@@ -37,6 +38,11 @@
         "route": "#p M06/6-31+G(d,p)",
         "single_point": true,
         "conformers": true
+      },
+      "s0_vac": {
+        "program": "gaussian16",
+        "route": "#p M06/6-31+G(d,p) opt",
+        "opt": true
       }
     }
   }
