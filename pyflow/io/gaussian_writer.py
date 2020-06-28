@@ -160,7 +160,7 @@ def main(args: dict) -> None:
     if args["title"] is None:
         args["title"] = Path(args["geometry_file"]).stem
     if args["geometry_format"] is None:
-        args["geometry_format"] = Path(args["geometry_file"]).suffix
+        args["geometry_format"] = Path(args["geometry_file"]).suffix[1:]
 
     filepath = Path(args.pop("location")).resolve() / "{}.com".format(args["title"])
 
