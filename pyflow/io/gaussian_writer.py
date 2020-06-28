@@ -125,7 +125,6 @@ def parse_args(sys_args: List[str]) -> dict:
     molecule_options.add_argument(
         "-gf", "--geometry_format",
         type=str,
-        default=argparse.SUPPRESS,
         help="the format of the input geometry file")
     molecule_options.add_argument(
         "-sm", "--smiles_geometry_file",
@@ -160,6 +159,8 @@ def parse_args(sys_args: List[str]) -> dict:
 def main(args: dict) -> None:
     if args["title"] is None:
         args["title"] = Path(args["geometry_file"]).stem
+    if args["geometry_format"] is None:
+        args["geometry_format"] = Path(args["geometry_file"]).suffix
 
     filepath = Path(args.pop("location")).resolve() / "{}.com".format(args["title"])
 
