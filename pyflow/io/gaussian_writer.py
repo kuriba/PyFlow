@@ -123,15 +123,19 @@ def parse_args(sys_args: List[str]) -> dict:
         default=argparse.SUPPRESS,
         required="--formats" not in sys.argv and "-f" not in sys.argv)
     molecule_options.add_argument(
-        "--smiles_geometry_file",
-        type=str,
-        help="path to geometry file to used to determine the charge",
-        default=argparse.SUPPRESS,
-        required="--formats" not in sys.argv and "-f" not in sys.argv)
-    molecule_options.add_argument(
         "-gf", "--geometry_format",
         type=str,
         help="the format of the input geometry file")
+    molecule_options.add_argument(
+        "-sm", "--smiles_geometry_file",
+        type=str,
+        help="path to geometry file to used to determine the SMILES and charge",
+        default=argparse.SUPPRESS)
+    molecule_options.add_argument(
+        "-smf", "--smiles_geometry_format",
+        type=str,
+        help="path to geometry file to used to determine the SMILES and charge",
+        default=argparse.SUPPRESS)
 
     # file management options
     file_group = parser.add_argument_group("File management options")
