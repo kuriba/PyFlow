@@ -4,6 +4,7 @@ import argparse
 import subprocess
 import sys
 from pathlib import Path
+from typing import List
 
 from pyflow.flow.flow_utils import load_run_params
 from pyflow.io.file_writer import FileWriter
@@ -95,7 +96,7 @@ class SbatchWriter(FileWriter):
         return job_id
 
 
-def parse_args():
+def parse_args(sys_args: List[str]) -> None:
     # default configuration options
     config = load_run_params("slurm")
 
@@ -189,7 +190,7 @@ def parse_args():
         type=str,
         help="name of Slurm error file")
 
-    args = vars(parser.parse_args())
+    args = vars(parser.parse_args(sys_args))
 
     return args
 
@@ -199,11 +200,3 @@ def main(args: dict):
     sbatch_writer = SbatchWriter(**args)
 
     sbatch_writer.write()
-
-
-if __name__ == "__main__":
-    # parse arguments
-    args = parse_args()
-
-    # generate input file
-    main(args)

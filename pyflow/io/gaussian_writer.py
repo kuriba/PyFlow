@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse
 import sys
 from pathlib import Path
+from typing import List
 
 from pyflow.flow.flow_utils import load_run_params
 from pyflow.io.file_writer import AbstractInputFileWriter
@@ -48,7 +49,7 @@ class GaussianWriter(AbstractInputFileWriter):
         super().write()
 
 
-def parse_args():
+def parse_args(sys_args: List[str]) -> dict:
     # default configuration options
     default_params = load_run_params(program="gaussian16")
 
@@ -145,7 +146,7 @@ def parse_args():
         help="overwrite input file if it already exists")
 
     # parse arguments
-    args = vars(parser.parse_args())
+    args = vars(parser.parse_args(sys_args))
 
     return args
 
@@ -163,11 +164,3 @@ def main(args: dict) -> None:
                                      overwrite_mode=args.pop("overwrite"),
                                      **args)
     gaussian_writer.write()
-
-
-if __name__ == "__main__":
-    # parse args
-    args = parse_args()
-
-    # generate input file
-    main(args)
