@@ -180,7 +180,7 @@ class FlowAction:
         """
         from pyflow.io import gaussian_writer
 
-        args = vars(gaussian_writer.parse_args(sys.argv[2:]))
+        args = gaussian_writer.parse_args(sys.argv[2:])
 
         gaussian_writer.main(args)
 
@@ -192,7 +192,7 @@ class FlowAction:
         """
         from pyflow.io import sbatch_writer
 
-        args = vars(sbatch_writer.parse_args(sys.argv[2:]))
+        args = sbatch_writer.parse_args(sys.argv[2:])
 
         sbatch_writer.main(args)
 
