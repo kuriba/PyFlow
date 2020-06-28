@@ -383,7 +383,14 @@ class FlowRunner:
 
         return len(input_files)
 
-    def queue_dependents(self, job_id: int):
+    def queue_dependents(self, job_id: int) -> None:
+        """
+        Queues the dependent jobs for the currently running step with ID
+        ``self.current_step_id``.
+
+        :param job_id: the job ID for the currently running step
+        :return: None
+        """
         dependents = self.flow_config.get_dependents(self.current_step_id)
         for dependent_id in dependents:
             sbatch_filename = "{}_submitter.sbatch".format(dependent_id)
@@ -405,7 +412,13 @@ class FlowRunner:
             sbatch_writer.submit()
 
     @staticmethod
-    def print_slurm_report():
+    def print_slurm_report() -> None:
+        """
+        Prints a dictionary containing values of various SLURM environment variables
+        which is useful for troubleshooting cluster or partition issues.
+
+        :return: None
+        """
         username = getuser()
 
         info = OrderedDict([("CLUSTER_NAME", os.getenv("SLURM_CLUSTER_NAME")),
@@ -439,8 +452,8 @@ class FlowRunner:
 
     def get_input_file(self) -> Path:
         """
-        Determines the input file based on the ``$SLURM_ARRAY_TASK_ID`` environment
-        variable.
+        Determines the input file to run based on the ``$SLURM_ARRAY_TASK_ID``
+        environment variable.
 
         :return: a Path object pointing to the input file
         """
@@ -491,7 +504,9 @@ class FlowRunner:
         output_filepath = Path(output_file).resolve()
         if self.step_program == "gaussian16":
             matches = find_string(output_filepath, "Normal termination")
-            return len(matches) == sum([self.current_step_config["opt"], self.current_step_config["freq"]])
+            opt_freq = sum([self.current_step_config["opt"], self.current_step_config["freq"]])
+            sp = sum([self.current_step_config["single_point"]])
+            return len(matches) == opt_freq or len(matches) == sp
         elif self.step_program == "gamess":
             matches = find_string(output_filepath, "TERMINATED NORMALLY")
             return len(matches) == sum([self.current_step_config["opt"]])
