@@ -13,16 +13,19 @@ class FlowAction:
     :meth:`main<pyflow.flow.command_line.main>` function in :mod:`pyflow.flow.command_line`
     """
 
-    ACTION_CHOICES = ('begin', 'run', 'handle', 'progress', 'setup', 'conformers')
+    ACTION_CHOICES = ('begin', 'run', 'handle', 'progress', 'setup', 'conformers',
+                      'g16', 'sbatch')
 
     ACTION_HELP = textwrap.dedent("""
-        Subcommand to run:
-        begin = begins a workflow
-        run = runs a calculation
-        handle = handles a completed, failed, or timed-out calculation
-        progress = displays the progress for the current workflow
-        setup = sets up a new workflow directory
+        Action to perform:
+        begin = begin a workflow
+        run = run a calculation
+        handle = handle a completed, failed, or timed-out calculation
+        progress = display the progress for the current workflow
+        setup = set up a new workflow directory
         conformers = generate conformers
+        g16 = write a Gaussian 16 input file
+        sbatch = write a Slurm submission script
         """)
 
     def __init__(self):
@@ -150,7 +153,7 @@ class FlowAction:
 
     def handle(self) -> None:
         """
-        Handle processing of output from a quantum chemistry calculation run as
+        Handles processing of output from a quantum chemistry calculation run as
         part of an array
 
         :return: None
@@ -169,6 +172,29 @@ class FlowAction:
 
         FlowRunner.handle_array_output(args["step_id"])
 
+    def g16(self) -> None:
+        """
+        Handle creation of input Gaussian 16 input files.
+
+        :return: None
+        """
+        from pyflow.io import gaussian_writer
+
+        args = vars(gaussian_writer.parse_args(sys.argv[2:]))
+
+        gaussian_writer.main(args)
+
+    def sbatch(self) -> None:
+        """
+        Handle creation of Slurm submission scripts.
+
+        :return: None
+        """
+        from pyflow.io import sbatch_writer
+
+        args = vars(sbatch_writer.parse_args(sys.argv[2:]))
+
+        sbatch_writer.main(args)
 
 def main():
     FlowAction()
