@@ -125,6 +125,7 @@ def parse_args(sys_args: List[str]) -> dict:
     molecule_options.add_argument(
         "-gf", "--geometry_format",
         type=str,
+        default=argparse.SUPPRESS,
         help="the format of the input geometry file")
     molecule_options.add_argument(
         "-sm", "--smiles_geometry_file",
