@@ -107,9 +107,10 @@ class AbstractInputFileWriter(FileWriter):
         # charge and multiplicity
         if self.args.get("smiles_geometry_file") is None:
             self.args["smiles_geometry_file"] = self.args["geometry_file"]
+            self.args["smiles_geometry_format"] = self.args["geometry_format"]
 
         smiles = mol_utils.get_smiles(str(self.args["smiles_geometry_file"]),
-                                      geometry_format=self.args.get("smiles_geometry_format"))
+                                      geometry_format=self.args["smiles_geometry_format"])
 
         self.args["charge"] = mol_utils.get_charge(smiles) + self.args.get("charge", 0)
 
