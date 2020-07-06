@@ -232,6 +232,13 @@ class FlowAction:
             default="default",
             help="the ID for the new workflow configuration")
 
+        parser.add_argument(
+            "-v", "--verbose",
+            action="store_true",
+            required=False,
+            default=False,
+            help="if True, prints full workflow configuration")
+
         args = vars(parser.parse_args(sys.argv[2:]))
 
         FlowConfig.build_config(**args)

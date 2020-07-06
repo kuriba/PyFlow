@@ -198,14 +198,13 @@ class FlowConfig:
             return True
 
     @staticmethod
-    def build_config(config_file: str, config_id: str, write: bool = False) -> None:
+    def build_config(config_file: str, config_id: str, verbose: bool = False) -> None:
         """
         Function for helping the user build a flow configuration file for a custom
         workflow.
 
         :return: None
         """
-        # TODO test build_config method
         import copy
         import json
 
@@ -315,11 +314,11 @@ class FlowConfig:
         new_config = add_step()
         existing_config[config_id] = new_config
 
-        if write:
-            with config_file.open("w") as f:
-                f.write(json.dumps(existing_config, indent=4))
-        else:
+        if verbose:
             print(json.dumps(new_config, indent=4))
+
+        with config_file.open("w") as f:
+            f.write(json.dumps(existing_config, indent=4))
 
     def _add_missing_step_params(self, config: dict) -> dict:
         """
