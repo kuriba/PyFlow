@@ -208,6 +208,33 @@ class FlowAction:
         msg = git_dir.pull()
         print(msg)
 
+    def build_config(self) -> None:
+        """
+        Method used to build a workflow configuration file.
+
+        :return: None
+        """
+        from pyflow.flow.flow_config import FlowConfig
+
+        parser = argparse.ArgumentParser(description="Build a workflow configuration file")
+
+        parser.add_argument(
+            "-c", "--config_file",
+            type=str,
+            required=True,
+            help="the path to the file to write the workflow configuration to")
+
+        parser.add_argument(
+            "-i", "--config_id",
+            type=str,
+            required=False,
+            default="default",
+            help="the ID for the new workflow configuration")
+
+        args = vars(parser.parse_args(sys.argv[2:]))
+
+        FlowConfig.build_config(**args)
+
 
 def main():
     FlowAction()

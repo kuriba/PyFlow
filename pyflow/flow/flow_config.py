@@ -1,5 +1,7 @@
+import sys
 from json import load, dumps
-from typing import List
+from pathlib import Path
+from typing import List, Any
 
 from pyflow.flow.flow_utils import load_run_params
 
@@ -62,7 +64,6 @@ class FlowConfig:
 
     # dict of all supported step parameters and their default values for each workflow step
     SUPPORTED_STEP_PARAMS = {"all": {"opt": True,
-                                     "freq": False,
                                      "single_point": False,
                                      "conformers": False,
                                      "proceed_on_failed_conf": True,
@@ -74,6 +75,7 @@ class FlowConfig:
                                      "time_padding": RUN_PARAMS["slurm"]["time_padding"],
                                      "simul_jobs": 50},
                              "gaussian16": {"route": "#p",
+                                            "freq": False,
                                             "attempt_restart": False,
                                             "nproc": RUN_PARAMS["gaussian16"]["nproc"],
                                             "memory": RUN_PARAMS["gaussian16"]["memory"],
@@ -196,15 +198,127 @@ class FlowConfig:
             return True
 
     @staticmethod
-    def build_config(write: bool = False) -> dict:
+    def build_config(config_file: Path, config_id: str, write: bool = False) -> None:
         """
         Function for helping the user build a flow configuration file for a custom
         workflow.
 
-        :return:
+        :return: None
         """
-        # TODO write build_config (low priority)
-        pass
+        # TODO test build_config method
+        import copy
+        import json
+
+        def validate_step_id(step_id: str) -> bool:
+            return len(step_id) > 0 and not step_id.startswith("_")
+
+        def request_step_id() -> str:
+            valid_step_id = False
+            while not valid_step_id:
+                step_id = str(input("Please specify a step ID: "))
+                valid_step_id = validate_step_id(step_id)
+                if not valid_step_id:
+                    print("'{}' is an invalid step ID (step IDs should be at least "
+                          "one character long and cannot start with an underscore)".format(step_id))
+            return step_id
+
+        def validate_step_program(step_program: str) -> bool:
+            return step_program in FlowConfig.SUPPORTED_PROGRAMS
+
+        def request_step_program(step_id: str) -> str:
+            valid_step_program = False
+            while not valid_step_program:
+                select_program_msg = "Please select the QC program for step '{}': ".format(step_id)
+                step_program = str(input(select_program_msg)).lower()
+                valid_step_program = validate_step_program(step_program)
+                if not valid_step_program:
+                    print("'{}' is an invalid QC program.".format(step_program))
+            return step_program
+
+        def convert_type(value: str, desired_type: Any):
+            if desired_type == bool:
+                if value.lower() == "true":
+                    return True
+                elif value.lower() == "false":
+                    return False
+                else:
+                    raise ValueError("Value '{}' cannot be cast to type <bool>".format(value))
+            else:
+                return desired_type(value)
+
+        def add_step(step_id: str = None, step_program: str = None, config: dict = None) -> dict:
+
+            if step_id is None:
+                step_id = request_step_id()
+            if step_program is None:
+                step_program = request_step_program(step_id)
+
+            if config is None:
+                config = {}
+                config["initial_step"] = step_id
+                config["steps"] = {}
+
+            config["steps"] = {step_id: {}}
+
+            # create default dictionary of step parameters
+            step_params = copy.deepcopy(FlowConfig.SUPPORTED_STEP_PARAMS["all"])
+            for k, v in copy.deepcopy(FlowConfig.SUPPORTED_STEP_PARAMS[step_program]):
+                step_params[k] = v
+
+            # request values for required step parameters
+            for p in FlowConfig.REQUIRED_STEP_PARAMS[step_program]:
+                value_type = type(step_params.pop(p))
+                value = convert_type(input("Please specify a value for parameter '{}':\n".format(p)), value_type)
+                step_params[p] = value
+
+            # customize step parameters
+            print("Current parameters for step '{}':\n{}".format(step_id, json.dumps(step_params, indent=4)))
+            custom_params_msg = "Please specify a comma-separated list of parameters " \
+                                "and desired values for step '{}' (e.g., param1=val1, param2=val2)," \
+                                " otherwise press Return to use default values:\n".format(step_id)
+            new_vals = str(input(custom_params_msg))
+            if len(new_vals.strip()) > 0:
+                new_vals = [new_val.strip() for new_val in new_vals.split(",")]
+                for val in new_vals:
+                    k, v = val.split("=")
+                    if k in step_params:
+                        value_type = type(step_params[k])
+                        step_params[k] = convert_type(v, value_type)
+
+            # add dependent steps
+            dependents = str(input("Please specify a comma-separated list of dependent step IDs for step '{}',"
+                                   "otherwise, press Return to finish building this step:\n".format(step_id)))
+
+            if len(dependents.strip()) > 0:
+                dependents = [dependent.strip() for dependent in dependents.split(",")]
+                step_params["dependents"] = dependents
+                for d in dependents:
+                    add_step(step_id=d, config=config)
+
+            return config
+
+        # check if config_file exists
+        if config_file.exists():
+            with config_file.open("r") as f:
+                existing_config = load(f)
+            if config_id in existing_config:
+                print("The config_id '{}' already exists in config_file '{}'".format(config_id, config_file))
+                sys.exit(1)
+            else:
+                print("Appending new workflow configuration with ID '{}' to config file '{}'".format(config_id,
+                                                                                                     config_file))
+        else:
+            existing_config = {}
+
+        print("Initial step configuration:")
+        new_config = add_step()
+        existing_config[config_id] = new_config
+
+        if write:
+            with config_file.open("w") as f:
+                f.write(json.dumps(existing_config, indent=4))
+        else:
+            print(json.dumps(new_config, indent=4))
 
     def _add_missing_step_params(self, config: dict) -> dict:
         """
