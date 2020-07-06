@@ -262,7 +262,8 @@ class FlowConfig:
 
             # create default dictionary of step parameters
             step_params = copy.deepcopy(FlowConfig.SUPPORTED_STEP_PARAMS["all"])
-            for k, v in copy.deepcopy(FlowConfig.SUPPORTED_STEP_PARAMS[step_program]):
+            program_params = copy.deepcopy(FlowConfig.SUPPORTED_STEP_PARAMS[step_program])
+            for k, v in program_params:
                 step_params[k] = v
 
             # request values for required step parameters
