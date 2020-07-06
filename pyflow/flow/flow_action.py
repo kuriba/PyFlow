@@ -14,7 +14,7 @@ class FlowAction:
     """
 
     ACTION_CHOICES = ('begin', 'run', 'handle', 'progress', 'setup', 'conformers',
-                      'g16', 'sbatch', 'update')
+                      'g16', 'sbatch', 'update', 'build_config')
 
     ACTION_HELP = textwrap.dedent("""
         Actions:
@@ -26,7 +26,8 @@ class FlowAction:
         conformers = generate conformers
         g16 = write a Gaussian 16 input file
         sbatch = write a Slurm submission script
-        update = download the latest Pyflow code from GitHub""")
+        update = download the latest Pyflow code from GitHub
+        build_config = create a new workflow configuration""")
 
     def __init__(self):
         """
