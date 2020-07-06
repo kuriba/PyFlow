@@ -98,7 +98,7 @@ class SbatchWriter(FileWriter):
 
 def parse_args(sys_args: List[str]) -> None:
     # default configuration options
-    config = load_run_params("slurm")
+    config = load_run_params(program="slurm")
 
     parser = argparse.ArgumentParser(
         description="Slurm sbatch file options parser")
@@ -112,7 +112,7 @@ def parse_args(sys_args: List[str]) -> None:
     parser.add_argument(
         "-p", "--partition",
         type=str,
-        default=config["PARTITION"],
+        default=config["partition"],
         help="partition on which to run the job")
     parser.add_argument(
         "-t", "--time",
@@ -152,7 +152,7 @@ def parse_args(sys_args: List[str]) -> None:
     parser.add_argument(
         "-e", "--email",
         type=str,
-        default=config["EMAIL"],
+        default=config["email"],
         help="email address to send job termination notification; default email if none given")
     parser.add_argument(
         "-d_type", "--dependency_type",
