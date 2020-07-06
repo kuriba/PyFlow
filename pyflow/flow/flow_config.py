@@ -198,7 +198,7 @@ class FlowConfig:
             return True
 
     @staticmethod
-    def build_config(config_file: Path, config_id: str, write: bool = False) -> None:
+    def build_config(config_file: str, config_id: str, write: bool = False) -> None:
         """
         Function for helping the user build a flow configuration file for a custom
         workflow.
@@ -298,6 +298,7 @@ class FlowConfig:
             return config
 
         # check if config_file exists
+        config_file = Path(config_file)
         if config_file.exists():
             with config_file.open("r") as f:
                 existing_config = load(f)
