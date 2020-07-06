@@ -2,7 +2,7 @@ import argparse
 import sys
 import textwrap
 
-from pyflow.flow.flow_utils import get_default_config_file
+from pyflow.flow.flow_utils import get_default_config_file, get_path_to_pyflow
 
 
 class FlowAction:
@@ -14,10 +14,10 @@ class FlowAction:
     """
 
     ACTION_CHOICES = ('begin', 'run', 'handle', 'progress', 'setup', 'conformers',
-                      'g16', 'sbatch')
+                      'g16', 'sbatch', 'update')
 
     ACTION_HELP = textwrap.dedent("""
-        Action to perform:
+        Actions:
         begin = begin a workflow
         run = run a calculation
         handle = handle a completed, failed, or timed-out calculation
@@ -26,7 +26,7 @@ class FlowAction:
         conformers = generate conformers
         g16 = write a Gaussian 16 input file
         sbatch = write a Slurm submission script
-        """)
+        update = download the latest Pyflow code from GitHub""")
 
     def __init__(self):
         """
@@ -44,6 +44,7 @@ class FlowAction:
         """
         parser = argparse.ArgumentParser(
             description="Parser for interacting with pyflow through the command line",
+            usage="pyflow <ACTION> <ARGUMENTS>",
             formatter_class=argparse.RawTextHelpFormatter)
 
         parser.add_argument(
@@ -174,7 +175,7 @@ class FlowAction:
 
     def g16(self) -> None:
         """
-        Handle creation of input Gaussian 16 input files.
+        Method used to create Gaussian 16 input files.
 
         :return: None
         """
@@ -186,7 +187,7 @@ class FlowAction:
 
     def sbatch(self) -> None:
         """
-        Handle creation of Slurm submission scripts.
+        Method used to create Slurm submission scripts.
 
         :return: None
         """
@@ -195,6 +196,18 @@ class FlowAction:
         args = sbatch_writer.parse_args(sys.argv[2:])
 
         sbatch_writer.main(args)
+
+    def update(self) -> None:
+        """
+        Method used to update Pyflow source code with most recent GitHub version.
+
+        :return: None
+        """
+        import git
+        git_dir = git.cmd.Git(get_path_to_pyflow())
+        msg = git_dir.pull()
+        print(msg)
+
 
 def main():
     FlowAction()
