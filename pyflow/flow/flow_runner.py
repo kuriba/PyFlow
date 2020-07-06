@@ -281,8 +281,6 @@ class FlowRunner:
         :param source_files: list of Path objects
         :return: a list of Path objects to the lowest energy conformers
         """
-        if not self.current_step_config["conformers"]:
-            raise AttributeError("The step '{}' has no conformers".format(self.current_step_id))
 
         prev_step_id = self.get_prev_step_id()
         prev_program = self.flow_config.get_step(prev_step_id)["program"]
