@@ -45,7 +45,9 @@ class FlowConfig:
     REQUIRED_STEP_PARAMS = {"all":
                                 ["program"],
                             "gaussian16":
-                                ["route"]}
+                                ["route"],
+                            "gamess":
+                                ["gbasis"]}
 
     # dict of required directories for step parameters
     REQUIRED_STEP_DIRS = {"all":
