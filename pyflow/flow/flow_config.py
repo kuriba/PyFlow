@@ -287,7 +287,7 @@ class FlowConfig:
 
             # add dependent steps
             dependents = str(input("Please specify a comma-separated list of dependent step IDs for step '{}',"
-                                   "otherwise, press Return to finish building this step:\n".format(step_id)))
+                                   " otherwise, press Return to finish building this step:\n".format(step_id)))
 
             if len(dependents.strip()) > 0:
                 dependents = [dependent.strip() for dependent in dependents.split(",")]
