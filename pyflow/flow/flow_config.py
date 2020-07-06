@@ -258,8 +258,6 @@ class FlowConfig:
                 config["initial_step"] = step_id
                 config["steps"] = {}
 
-            config["steps"] = {step_id: {}}
-
             # create default dictionary of step parameters
             step_params = copy.deepcopy(FlowConfig.SUPPORTED_STEP_PARAMS["all"])
             for k, v in copy.deepcopy(FlowConfig.SUPPORTED_STEP_PARAMS[step_program]).items():
@@ -268,7 +266,7 @@ class FlowConfig:
             # request values for required step parameters
             for p in FlowConfig.REQUIRED_STEP_PARAMS[step_program]:
                 value_type = type(step_params.pop(p))
-                value = convert_type(input("Please specify a value for parameter '{}':\n".format(p)), value_type)
+                value = convert_type(input("Please specify a value for parameter '{}': ".format(p)), value_type)
                 step_params[p] = value
 
             # customize step parameters
@@ -284,6 +282,8 @@ class FlowConfig:
                     if k in step_params:
                         value_type = type(step_params[k])
                         step_params[k] = convert_type(v, value_type)
+
+            config["steps"][step_id] = step_params
 
             # add dependent steps
             dependents = str(input("Please specify a comma-separated list of dependent step IDs for step '{}',"
