@@ -319,6 +319,7 @@ class FlowConfig:
 
         with config_file.open("w") as f:
             f.write(json.dumps(existing_config, indent=4))
+        print("Workflow configuration written to '{}'".format(config_file))
 
     def _add_missing_step_params(self, config: dict) -> dict:
         """
