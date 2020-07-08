@@ -54,6 +54,7 @@ def get_formatted_geometry(geometry_file: str, output_format: str, geometry_form
 def get_energy(output_file: str, format: str, excited_state: bool = False) -> float:
     """
     Returns the energy from the given output file in units of electronvolts (eV).
+
     :param output_file: the path to the output file
     :param format: the format of the output file
     :param excited_state: whether to extract excited state energy
