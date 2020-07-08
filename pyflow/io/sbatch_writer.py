@@ -50,10 +50,11 @@ class SbatchWriter(FileWriter):
         self.append("#!/bin/bash\n")
         self.append("#SBATCH -J {}\n".format(self.jobname))
 
-        if self.args.get("output"):
-            self.append("#SBATCH -o {}\n".format(self.args["output"]))
-        if self.args.get("error"):
-            self.append("#SBATCH -e {}\n".format(self.args["error"]))
+        self.args["output"] = self.args.get("output", "{}.o".format(self.jobname))
+        self.append("#SBATCH -o {}\n".format(self.args["output"]))
+
+        self.args["error"] = self.args.get("error", "{}.e".format(self.jobname))
+        self.append("#SBATCH -e {}\n".format(self.args["error"]))
 
         self.append("#SBATCH -N {}\n".format(self.args.get("nodes", 1)))
 
@@ -164,12 +165,12 @@ def parse_args(sys_args: List[str]) -> None:
         required="dependency_type" in sys.argv,
         help="job ID on which to create the dependency")
 
-    # script to run
+    # code to run
     parser.add_argument(
-        "-s", "--script",
-        type=int,
-        help="script to run",
-        default=0)
+        "-c", "--commands",
+        type=str,
+        required=True,
+        help="file containing commands to run")
 
     # file management options
     parser.add_argument(
