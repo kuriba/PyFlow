@@ -19,10 +19,10 @@ class FlowAction:
     ACTION_HELP = textwrap.dedent("""
         Actions:
         begin = begin a workflow
-        run = run a calculation
+        run = run a calculation as part of an array
         handle = handle a completed, failed, or timed-out calculation
         progress = display the progress for the current workflow
-        setup = set up a new workflow directory
+        setup = set up a directory for a new workflow
         conformers = generate conformers
         g16 = write a Gaussian 16 input file
         sbatch = write a Slurm submission script
@@ -107,6 +107,13 @@ class FlowAction:
 
         setup_dirs(**args)
 
+    def conformers(self) -> None:
+        """
+        Generates a library of conformers based on the given core.
+        :return:
+        """
+        pass  # TODO implement conformer generation
+
     def begin(self) -> None:
         """
         Begins running a workflow.
@@ -173,6 +180,14 @@ class FlowAction:
         args = vars(parser.parse_args(sys.argv[2:]))
 
         FlowRunner.handle_array_output(args["step_id"])
+
+    def progress(self) -> None:
+        """
+        Method used to display current workflow progress.
+
+        :return: None
+        """
+        pass  # TODO implement progress checker
 
     def g16(self) -> None:
         """
