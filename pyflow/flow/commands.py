@@ -1,14 +1,7 @@
-import subprocess
-
-
 class Commands:
     """
 
     """
-
-    @classmethod
-    def slurm_report(cls):
-        subprocess.run([])
 
     @staticmethod
     def get_run_command(step_id: str, time: int) -> str:
