@@ -52,3 +52,5 @@ def setup_dirs(save_location: str, workflow_name: str, config_file: str, config_
 
     with flow_instance_config_file.open("w") as f:
         f.write(json.dumps(flow_instance_config, indent=4))
+
+    print("Successfully set up workflow directory '{}'.".format(workflow_name))
