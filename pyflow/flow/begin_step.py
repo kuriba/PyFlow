@@ -35,9 +35,7 @@ def begin_step(step_id: str = None, show_progress: bool = False, do_not_track: b
                       workflow_params=workflow_params,
                       workflow_params_file=workflow_params_file)
         if not do_not_track:
-            track_workflow(flow_config=flow_config,
-                           workflow_params=workflow_params,
-                           workflow_params_file=workflow_params_file,
+            track_workflow(workflow_params=workflow_params,
                            workflow_main_dir=workflow_main_dir)
         show_progress = True
 
