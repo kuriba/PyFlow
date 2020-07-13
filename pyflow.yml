@@ -1,0 +1,13 @@
+name: pyflow
+channels:
+  - defaults
+  - conda-forge
+  - rdkit
+dependencies:
+  - python=3.8.1
+  - openbabel
+  - rdkit
+  - pip
+  - pip:
+      - tqdm
+      - gitpython
