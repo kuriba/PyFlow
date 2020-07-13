@@ -425,7 +425,6 @@ class FlowConfig:
         for program in ["all", step_program]:
             if program in FlowConfig.REQUIRED_STEP_DIRS:
                 for param, required_dirs in FlowConfig.REQUIRED_STEP_DIRS[program].items():
-                    print(step_config)
                     if step_config[param]:
                         directories.extend(required_dirs)
 
