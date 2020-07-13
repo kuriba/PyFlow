@@ -344,7 +344,8 @@ class FlowRunner:
                                                  commands=sbatch_commands,
                                                  cores=self.current_step_config["nproc"],
                                                  output="%A_%a.o",
-                                                 error="%A_%a.e")
+                                                 error="%A_%a.e",
+                                                 overwrite_mode=True)
         sbatch_writer.write()
 
         return sbatch_writer
@@ -410,8 +411,9 @@ class FlowRunner:
                                          filepath=sbatch_filepath,
                                          output="/dev/null",
                                          error="/dev/null",
+                                         dependency_id=job_id,
                                          dependency_type="afterany",
-                                         dependency_id=job_id)
+                                         overwrite_mode=True)
             sbatch_writer.write()
             sbatch_writer.submit()
 
@@ -599,4 +601,5 @@ class FlowRunner:
         config_id = workflow_params["config_id"]
         dest = self.SAVE_OUTPUT_LOCATION / config_file.stem / config_id / self.workflow_dir
         os.makedirs(dest, exist_ok=True)
+        print(dest)
         shutil.copy(str(output_file), str(dest / output_file.name))
