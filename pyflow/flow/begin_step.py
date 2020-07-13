@@ -91,6 +91,7 @@ def track_workflow(workflow_params: dict, workflow_main_dir: Path) -> None:
                      "user": getuser(),
                      "run_directory": workflow_main_dir.as_posix(),
                      "submission_date": datetime.today().strftime("%d-%m-%Y"),
-                     "submission_time": datetime.today().strftime("%H:%M:%S")}
+                     "submission_time": datetime.today().strftime("%H:%M:%S"),
+                     "progress": "0%"}
 
     flow_tracker.track_new_flow(**new_flow_info)
