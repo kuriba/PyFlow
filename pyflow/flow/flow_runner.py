@@ -95,6 +95,7 @@ class FlowRunner:
         sbatch_file = self.setup_sbatch_file(array_size=num_input_files)
 
         job_id = sbatch_file.submit()
+        print("Submitted step '{}' with job ID {}".format(self.current_step_id, job_id))
 
         self.queue_dependents(job_id)
 
