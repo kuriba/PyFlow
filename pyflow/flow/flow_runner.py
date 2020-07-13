@@ -201,7 +201,8 @@ class FlowRunner:
         input_files = self.get_input_files(structure_files, structure_dest)
 
         if show_progress:
-            input_files = tqdm(input_files, desc="Setting up input files...")
+            desc = "Setting up {} input files".format(self.current_step_id)
+            input_files = tqdm(input_files, desc=desc)
 
         for f in input_files:
             input_filename = f[0]
