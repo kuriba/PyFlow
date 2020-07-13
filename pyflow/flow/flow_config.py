@@ -420,16 +420,16 @@ class FlowConfig:
         step_config = self.get_step(step_id)
         step_program = step_config["program"]
 
-        directories = set()
+        directories = []
 
         for program in ["all", step_program]:
             if program in FlowConfig.REQUIRED_STEP_DIRS:
                 for param, required_dirs in FlowConfig.REQUIRED_STEP_DIRS[program].items():
                     print(step_config)
                     if step_config[param]:
-                        directories.add(required_dirs)
+                        directories.extend(required_dirs)
 
-        directories = list(directories)
+        directories = list(set(directories))
 
         return directories
 
