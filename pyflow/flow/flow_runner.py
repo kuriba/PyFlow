@@ -46,6 +46,8 @@ class FlowRunner:
     PROGRAM_COMMANDS = {"gaussian16": "g16",
                         "gamess": "rungms"}
 
+    SAVE_OUTPUT_LOCATION = Path("/work/lopez/workflows")
+
     def __init__(self,
                  current_step_id: str,
                  flow_config: FlowConfig = None,
@@ -532,6 +534,9 @@ class FlowRunner:
         if flow_runner.is_complete(output_file):
             completed_dest = flow_runner.current_step_dir / "completed"
 
+            if flow_runner.current_step_config["save_output"]:
+                flow_runner.save_output(output_file)
+
             # move completed input/output files
             for f in glob("{}*".format(output_file.with_suffix(""))):
                 shutil.move(f, str(completed_dest))
@@ -577,3 +582,17 @@ class FlowRunner:
 
     def restart_failed_calc(self):
         pass  # TODO implement restart for failed calcs
+
+    def save_output(self, output_file: Path) -> None:
+        """
+        Creates a copy of the given output file in /work/lopez/workflows
+
+        :param output_file:
+        :return: None
+        """
+        workflow_params = load_workflow_params()
+        config_file = Path(workflow_params["config_file"])
+        config_id = workflow_params["config_id"]
+        dest = self.SAVE_OUTPUT_LOCATION / config_file.stem / config_id / self.workflow_dir
+        os.makedirs(dest, exist_ok=True)
+        shutil.copy(str(output_file), str(dest / output_file.name))
