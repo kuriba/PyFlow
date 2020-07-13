@@ -174,17 +174,20 @@ class FlowConfig:
             # ensure that parameters required by all programs are defined
             for param in FlowConfig.REQUIRED_STEP_PARAMS["all"]:
                 if param not in step_config:
+                    print("1")
                     return False
 
             # ensure that the program is valid
             program = step_config["program"]
             if program not in FlowConfig.SUPPORTED_PROGRAMS:
+                print("2")
                 return False
 
             # ensure that program-specific requirements are met
             if program in FlowConfig.REQUIRED_STEP_PARAMS:
                 for param in FlowConfig.REQUIRED_STEP_PARAMS[program]:
                     if param not in step_config:
+                        print("3")
                         return False
 
             # check that the specified parameters have valid types
@@ -193,6 +196,7 @@ class FlowConfig:
                     expect_type = type(default_val)
                     if param in step_config:
                         if not isinstance(step_config[param], expect_type):
+                            print("4")
                             return False
 
             return True
