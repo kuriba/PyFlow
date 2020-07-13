@@ -130,9 +130,16 @@ class FlowAction:
             required=False,
             help="the step ID to run")
 
+        parser.add_argument(
+            "--do_not_track",
+            action="store_true",
+            required=False,
+            help="do not track the workflow"
+        )
+
         args = vars(parser.parse_args(sys.argv[2:]))
 
-        begin_step(step_id=args.get("step_id"))
+        begin_step(**args)
 
     def run(self) -> None:
         """
