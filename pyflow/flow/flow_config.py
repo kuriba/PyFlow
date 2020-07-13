@@ -70,7 +70,7 @@ class FlowConfig:
                                      "dependents": [],
                                      "charge": 0,
                                      "multiplicity": 1,
-                                     "save_output": True,
+                                     "save_output": False,
                                      "partition": "short",
                                      "time_padding": RUN_PARAMS["slurm"]["time_padding"],
                                      "simul_jobs": 50},
