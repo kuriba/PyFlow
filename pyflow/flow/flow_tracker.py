@@ -9,8 +9,7 @@ class FlowTracker:
     Class used for tracking submitted, running, and completed workflows.
     """
 
-    # TODO update file path on Discovery
-    TRACK_FILE = Path("C:\\Users\\abreha.b\\.PyCharm2019.3\\config\\scratches\\scratch.csv")
+    TRACK_FILE = Path("/work/lopez/workflows/tracked_workflows.csv")
 
     REQUIRED_ATTRIBUTES = ["config_file", "config_id", "user", "run_directory",
                            "submission_date", "submission_time", "progress"]
