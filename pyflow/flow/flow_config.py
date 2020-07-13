@@ -261,6 +261,8 @@ class FlowConfig:
                 config["initial_step"] = step_id
                 config["steps"] = {}
 
+            config["program"] = step_program
+
             # create default dictionary of step parameters
             step_params = copy.deepcopy(FlowConfig.SUPPORTED_STEP_PARAMS["all"])
             for k, v in copy.deepcopy(FlowConfig.SUPPORTED_STEP_PARAMS[step_program]).items():
