@@ -540,6 +540,7 @@ class FlowRunner:
                 flow_runner.save_output(output_file)
 
             # move completed input/output files
+            print("IS COMPLETE {}".format(output_file))
             for f in glob("{}*".format(output_file.with_suffix(""))):
                 shutil.move(f, str(completed_dest))
 
