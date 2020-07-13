@@ -10,7 +10,7 @@ from pyflow.flow.flow_utils import load_workflow_params, WORKFLOW_PARAMS_FILENAM
 from pyflow.io.io_utils import upsearch
 
 
-def begin_step(step_id: str = None, show_progress: bool = False):
+def begin_step(step_id: str = None, show_progress: bool = False, do_not_track: bool = False):
     # try to find workflow .params file
     workflow_params_file = upsearch(WORKFLOW_PARAMS_FILENAME,
                                     message="Please execute this script in a workflow directory.")
@@ -31,10 +31,14 @@ def begin_step(step_id: str = None, show_progress: bool = False):
 
     # do stuff on first step (tracking, workflow params modification)
     if flow_config.get_initial_step_id() == step_id:
-        track_workflow(flow_config=flow_config,
-                       workflow_params=workflow_params,
-                       workflow_params_file=workflow_params_file,
-                       workflow_main_dir=workflow_main_dir)
+        initial_setup(flow_config=flow_config,
+                      workflow_params=workflow_params,
+                      workflow_params_file=workflow_params_file)
+        if not do_not_track:
+            track_workflow(flow_config=flow_config,
+                           workflow_params=workflow_params,
+                           workflow_params_file=workflow_params_file,
+                           workflow_main_dir=workflow_main_dir)
         show_progress = True
 
     # setup and start running workflow
@@ -45,10 +49,15 @@ def begin_step(step_id: str = None, show_progress: bool = False):
     flow_runner.run(show_progress=show_progress)
 
 
-def track_workflow(flow_config: FlowConfig, workflow_params: dict,
-                   workflow_params_file: Path, workflow_main_dir: Path):
-    config_file = Path(workflow_params["config_file"])
-    config_id = workflow_params["config_id"]
+def initial_setup(flow_config: FlowConfig, workflow_params: dict, workflow_params_file: Path) -> None:
+    """
+    Runs initial setup for workflow.
+
+    :param flow_config:
+    :param workflow_params:
+    :param workflow_params_file:
+    :return: None
+    """
 
     # add conformer information to .params file
     has_conformers = flow_config.get_step(flow_config.get_initial_step_id())["conformers"]
@@ -60,6 +69,19 @@ def track_workflow(flow_config: FlowConfig, workflow_params: dict,
     workflow_params["num_conformers"] = num_conformers
     with workflow_params_file.open("w") as f:
         f.write(json.dumps(workflow_params, indent=4))
+
+
+def track_workflow(workflow_params: dict, workflow_main_dir: Path) -> None:
+    """
+    Adds the current workflow to the tracked workflows CSV file.
+
+    :param workflow_params:
+    :param workflow_main_dir:
+    :return: None
+    """
+
+    config_file = Path(workflow_params["config_file"])
+    config_id = workflow_params["config_id"]
 
     # workflow tracking
     print("Tracking workflow...")
@@ -73,4 +95,4 @@ def track_workflow(flow_config: FlowConfig, workflow_params: dict,
                      "submission_date": datetime.today().strftime("%d-%m-%Y"),
                      "submission_time": datetime.today().strftime("%H:%M:%S")}
 
-    # TODO uncomment flow_tracker.track_new_flow(**new_flow_info)
+    flow_tracker.track_new_flow(**new_flow_info)
