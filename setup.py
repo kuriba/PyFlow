@@ -43,7 +43,6 @@ setup(
         "Topic :: Scientific/Engineering :: Chemistry"
     ],
     python_requires='>=3.8',
-    install_requires=['tqdm'],
     entry_points={
         'console_scripts': [
             'pyflow = pyflow.flow.flow_action:main'
