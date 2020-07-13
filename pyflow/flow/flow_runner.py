@@ -342,7 +342,9 @@ class FlowRunner:
                                                  jobname=jobname,
                                                  array=array_size,
                                                  commands=sbatch_commands,
-                                                 cores=self.current_step_config["nproc"])
+                                                 cores=self.current_step_config["nproc"],
+                                                 output="%A_%a.o",
+                                                 error="%A_%a.e")
         sbatch_writer.write()
 
         return sbatch_writer
