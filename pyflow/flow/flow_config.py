@@ -213,7 +213,7 @@ class FlowConfig:
         import json
 
         def validate_step_id(step_id: str) -> bool:
-            return len(step_id) > 0 and not step_id.startswith("_")
+            return len(step_id) > 0 and "_" not in step_id
 
         def request_step_id() -> str:
             valid_step_id = False
