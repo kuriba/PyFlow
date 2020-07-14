@@ -1,3 +1,4 @@
+import json
 import sys
 from json import load, dumps
 from pathlib import Path
@@ -162,14 +163,22 @@ class FlowConfig:
         for param, expect_type in FlowConfig.SUPPORTED_GENERAL_PARAMS.items():
             if param in config:
                 if not isinstance(config[param], expect_type):
+                    print("Config error: invalid type given for parameter '{}'; expected type {}".format(config[param],
+                                                                                                         expect_type))
                     return False
 
         # ensure consistency of initial_step with workflow steps
         if config["initial_step"] not in config["steps"]:
+            print("Config error: initial step '{}' is not defined in steps".format(config["initial_step"]))
             return False
 
         # validation of each workflow step
         for step_id, step_config in config["steps"].items():
+
+            # validate the step ID
+            if not FlowConfig.valid_step_id(step_id):
+                print("Config error: invalid step ID '{}'".format(step_id))
+                return False
 
             # ensure that parameters required by all programs are defined
             for param in FlowConfig.REQUIRED_STEP_PARAMS["all"]:
@@ -180,7 +189,7 @@ class FlowConfig:
             # ensure that the program is valid
             program = step_config["program"]
             if program not in FlowConfig.SUPPORTED_PROGRAMS:
-                print("Config error: invalid step program '{}' for step '{}'".format(program, step_id))
+                print("Config error: unsupported step program '{}' for step '{}'".format(program, step_id))
                 return False
 
             # ensure that program-specific requirements are met
@@ -202,6 +211,20 @@ class FlowConfig:
             return True
 
     @staticmethod
+    def valid_config_file(config_file: Path) -> bool:
+        with config_file.open() as f:
+            configs = json.load(f)
+        return all([FlowConfig.valid_config(v) for k, v in configs.items()])
+
+    @staticmethod
+    def valid_step_id(step_id: str) -> bool:
+        return len(step_id) > 0 and "_" not in step_id
+
+    @staticmethod
+    def valid_step_program(step_program: str) -> bool:
+        return step_program in FlowConfig.SUPPORTED_PROGRAMS
+
+    @staticmethod
     def build_config(config_file: str, config_id: str, verbose: bool = False) -> None:
         """
         Function for helping the user build a flow configuration file for a custom
@@ -210,30 +233,23 @@ class FlowConfig:
         :return: None
         """
         import copy
-        import json
-
-        def validate_step_id(step_id: str) -> bool:
-            return len(step_id) > 0 and "_" not in step_id
 
         def request_step_id() -> str:
             valid_step_id = False
             while not valid_step_id:
                 step_id = str(input("Please specify a step ID: "))
-                valid_step_id = validate_step_id(step_id)
+                valid_step_id = FlowConfig.valid_step_id(step_id)
                 if not valid_step_id:
                     print("'{}' is an invalid step ID (step IDs should be at least "
                           "one character long and cannot start with an underscore)".format(step_id))
             return step_id
-
-        def validate_step_program(step_program: str) -> bool:
-            return step_program in FlowConfig.SUPPORTED_PROGRAMS
 
         def request_step_program(step_id: str) -> str:
             valid_step_program = False
             while not valid_step_program:
                 select_program_msg = "Please select the QC program for step '{}': ".format(step_id)
                 step_program = str(input(select_program_msg)).lower()
-                valid_step_program = validate_step_program(step_program)
+                valid_step_program = FlowConfig.valid_step_program(step_program)
                 if not valid_step_program:
                     print("'{}' is an invalid QC program.".format(step_program))
             return step_program
@@ -304,6 +320,8 @@ class FlowConfig:
         # check if config_file exists
         config_file = Path(config_file)
         if config_file.exists():
+            if not FlowConfig.valid_config_file(config_file):
+                raise IOError("'{}' already exists but is an invalid config_file".format(config_file))
             with config_file.open("r") as f:
                 existing_config = load(f)
             if config_id in existing_config:
