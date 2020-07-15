@@ -140,7 +140,8 @@ class FlowTracker:
 
             results_table = results_table.append(result_entry, ignore_index=True, sort=False)
 
-        print("Progress report for '{}' {:>20}".format(workflow_dir.name, datetime.now()))
+        current_time_str = "[{}]".format(datetime.now().strftime("%b %d %Y %X"))
+        print("Progress report for '{}' {}".format(workflow_dir.name, current_time_str))
         print("Num. Molecules: {} ({})".format(num_molecules, num_structures))
         print(tabulate(results_table, headers="keys", tablefmt='psql', showindex=False))
 
