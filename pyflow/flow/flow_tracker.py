@@ -123,7 +123,8 @@ class FlowTracker:
                 now = datetime.now()
 
                 time_since_mtime = mtime - now
-                if time_since_mtime.min < 10:
+                print(time_since_mtime)
+                if time_since_mtime.seconds < 600:
                     running_jobs.append(f)
 
             num_running = len(running_jobs)
