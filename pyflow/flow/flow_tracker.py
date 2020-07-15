@@ -73,7 +73,7 @@ class FlowTracker:
     @staticmethod
     def check_progress(verbose: bool = False) -> float:
         def format_percentage(total: int, percentage: float) -> str:
-            percentage_str = "({}%)".format(round(percentage, 1))
+            percentage_str = "({}%)".format(round(percentage * 100, 1))
             print("{0:<3} {1:>8}".format(total, percentage_str))
             return "{0:<3} {1:>8}".format(total, percentage_str)
 
@@ -111,6 +111,7 @@ class FlowTracker:
 
             num_completed = len(glob(str(completed_dir / "*.{}".format(output_file_ext))))
             completion_rate = num_completed / num_jobs
+            print("")
 
             num_failed = len(glob(str(failed_dir / "*.{}".format(output_file_ext))))
             failure_rate = num_failed / num_jobs
