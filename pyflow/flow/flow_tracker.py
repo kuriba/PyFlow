@@ -73,7 +73,7 @@ class FlowTracker:
     @staticmethod
     def check_progress(verbose: bool = False) -> float:
         def format_percentage(total: int, percentage: float) -> str:
-            percentage_str = "({})".format(round(percentage, 1))
+            percentage_str = "({}%)".format(round(percentage, 1))
             return "{0:<5} {1:>8}".format(total, percentage_str)
 
         # ensure user is in a workflow directory
@@ -141,7 +141,7 @@ class FlowTracker:
                             "Running": format_percentage(num_running, running_rate),
                             "Failed": format_percentage(num_failed, failure_rate)}
 
-            results_table.append(result_entry, ignore_index=True, sort=False)
+            results_table = results_table.append(result_entry, ignore_index=True, sort=False)
 
         print(results_table.to_string(index=False))
 
