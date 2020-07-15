@@ -384,11 +384,24 @@ class FlowConfig:
 
     def get_step_ids(self) -> List[str]:
         """
-        Returns a list of step IDs for the current workflow.
+        Returns an ordered list of step IDs for the current workflow.
 
         :return: a list of step IDs
         """
-        return self.config["steps"].keys()
+        initial_step = self.get_initial_step_id()
+        step_ids = [initial_step]
+
+        current_ids = [initial_step]
+        while len(current_ids) > 0:
+            new_ids = []
+            for current_id in current_ids:
+                dependents = self.get_dependents(current_id)
+                step_ids.extend(dependents)
+                new_ids.extend(dependents)
+
+            current_ids = new_ids
+
+        return step_ids
 
     def get_initial_step_id(self) -> str:
         """
