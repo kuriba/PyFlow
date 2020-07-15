@@ -5,6 +5,7 @@ from pathlib import Path
 
 import pandas as pd
 from pandas.errors import EmptyDataError
+from tabulate import tabulate
 
 from pyflow.flow.flow_utils import load_workflow_params, WORKFLOW_PARAMS_FILENAME
 from pyflow.io.io_utils import upsearch
@@ -139,7 +140,7 @@ class FlowTracker:
 
             results_table = results_table.append(result_entry, ignore_index=True, sort=False)
 
-        print(results_table.to_string(index=False))
+        print(tabulate(results_table, tablefmt='psq1', showindex=False))
 
         return 0.
     # TODO mark unchaged workflows
