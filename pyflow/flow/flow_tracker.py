@@ -75,7 +75,6 @@ class FlowTracker:
     def check_progress(verbose: bool = False) -> float:
         def format_percentage(total: int, percentage: float) -> str:
             percentage_str = "({}%)".format(round(percentage * 100, 1))
-            print("{0:<3} {1:>8}".format(total, percentage_str))
             return "{0:<3} {1:>8}".format(total, percentage_str)
 
         # ensure user is in a workflow directory
@@ -140,7 +139,7 @@ class FlowTracker:
 
             results_table = results_table.append(result_entry, ignore_index=True, sort=False)
 
-        print(tabulate(results_table, tablefmt='psq1', showindex=False))
+        print(tabulate(results_table, headers="firstrow", tablefmt='psq1', showindex=False))
 
         return 0.
     # TODO mark unchaged workflows
