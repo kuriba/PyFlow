@@ -135,7 +135,7 @@ class FlowTracker:
                             "Running": format_percentage(num_running, running_rate),
                             "Failed": format_percentage(num_failed, failure_rate)}
 
-            results_table.append(result_entry)
+            results_table.append(result_entry, ignore_index=True, sort=False)
 
         print(results_table.to_string(index=False))
 
