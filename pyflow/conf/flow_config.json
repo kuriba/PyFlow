@@ -42,7 +42,7 @@
           "s0_vac"
         ]
       },
-      "s0_vac": {
+      "s0-vac": {
         "program": "gaussian16",
         "route": "#p M06/6-31+G(d,p) opt",
         "opt": true
