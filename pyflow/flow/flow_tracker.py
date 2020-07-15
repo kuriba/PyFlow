@@ -3,6 +3,9 @@ from pathlib import Path
 import pandas as pd
 from pandas.errors import EmptyDataError
 
+from pyflow.flow.flow_utils import load_workflow_params, WORKFLOW_PARAMS_FILENAME
+from pyflow.io.io_utils import upsearch
+
 
 class FlowTracker:
     """
@@ -22,7 +25,7 @@ class FlowTracker:
         """
         self.workflow_id = workflow_id
 
-    def update(self, **kwargs):
+    def update_progress(self, **kwargs):
         """Updates progress attribute in csv file"""
         # TODO write update method for FlowTracker
         pass
@@ -64,5 +67,26 @@ class FlowTracker:
         except pd.errors.EmptyDataError:
             return False
 
-    # TODO track workflow percentage progress
+    @staticmethod
+    def check_progress(verbose: bool = False) -> float:
+        # ensure user is in a workflow directory
+        try:
+            workflow_params_file = upsearch(WORKFLOW_PARAMS_FILENAME)
+            workflow_dir = workflow_params_file.parent
+        except FileNotFoundError:
+            msg = "Unable to find workflow directory."
+            raise FileNotFoundError(msg)
+
+        from pyflow.flow.flow_config import FlowConfig
+        workflow_params = load_workflow_params()
+        config_file = workflow_params["config_file"]
+        config_id = workflow_params["config_id"]
+
+        config = FlowConfig(config_file, config_id)
+
+        all_steps = config.get_step_ids()
+
+        print(all_steps)
+
+        return 0.
     # TODO mark unchaged workflows
