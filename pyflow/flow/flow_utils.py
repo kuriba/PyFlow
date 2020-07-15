@@ -56,7 +56,7 @@ def load_run_params(config_id: str = "default", program: str = None) -> dict:
 
 def load_workflow_params() -> dict:
     """
-    Returns a dict of high level workflow  details stored in the .params file in
+    Returns a dict of high level workflow details stored in the .params file in
     the main directory of a workflow. These details include the path to the workflow ]
     configuration file which details all of the steps, the configuration ID, and
     the number of conformers in the workflow.
@@ -66,15 +66,15 @@ def load_workflow_params() -> dict:
     """
 
     try:
-        workflow_config_file = upsearch(WORKFLOW_PARAMS_FILENAME)
+        workflow_params_file = upsearch(WORKFLOW_PARAMS_FILENAME)
     except FileNotFoundError:
         message = "Unable to find .params file; ensure that you are in a workflow directory."
         raise FileNotFoundError(message)
 
-    with workflow_config_file.open() as f:
-        workflow_config = json.load(f)
+    with workflow_params_file.open() as f:
+        workflow_params = json.load(f)
 
-    return workflow_config
+    return workflow_params
 
 
 def get_path_to_pyflow() -> Path:
