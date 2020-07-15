@@ -39,7 +39,7 @@
         "single_point": true,
         "conformers": true,
         "dependents": [
-          "s0_vac"
+          "s0-vac"
         ]
       },
       "s0-vac": {
