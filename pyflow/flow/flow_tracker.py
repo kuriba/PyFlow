@@ -139,8 +139,7 @@ class FlowTracker:
 
             results_table = results_table.append(result_entry, ignore_index=True, sort=False)
 
-        print(tabulate(results_table, headers=results_header, tablefmt='psq1', showindex=False))
-        print(tabulate(results_table, headers="keys", tablefmt='psq1', showindex=False))
+        print(tabulate(results_table, headers="keys", tablefmt='psql', showindex=False))
 
         return 0.
     # TODO mark unchaged workflows
