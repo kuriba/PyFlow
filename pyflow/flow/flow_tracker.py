@@ -96,6 +96,8 @@ class FlowTracker:
         results_table = pd.DataFrame(columns=results_header)
 
         config = FlowConfig(config_file, config_id)
+        num_molecules = len(glob(str(workflow_dir / "unopt_pdbs" / "*0.pdb")))
+        num_structures = len(glob(str(workflow_dir / "unopt_pdbs" / "*.pdb")))
         for step_id in config.get_step_ids():
             step_config = config.get_step(step_id)
 
@@ -105,13 +107,12 @@ class FlowTracker:
             output_file_ext = FlowRunner.PROGRAM_OUTFILE_EXTENSIONS[step_config["program"]]
 
             if step_config["conformers"]:
-                num_jobs = len(glob(str(workflow_dir / "unopt_pdbs" / "*.pdb")))
+                num_jobs = num_structures
             else:
-                num_jobs = len(glob(str(workflow_dir / "unopt_pdbs" / "*0.pdb")))
+                num_jobs = num_molecules
 
             num_completed = len(glob(str(completed_dir / "*.{}".format(output_file_ext))))
             completion_rate = num_completed / num_jobs
-            print("")
 
             num_failed = len(glob(str(failed_dir / "*.{}".format(output_file_ext))))
             failure_rate = num_failed / num_jobs
@@ -139,6 +140,8 @@ class FlowTracker:
 
             results_table = results_table.append(result_entry, ignore_index=True, sort=False)
 
+        print("Progress report for '{}' {:>20}".format(workflow_dir.name, datetime.now()))
+        print("Num. Molecules: {} ({})".format(num_molecules, num_structures))
         print(tabulate(results_table, headers="keys", tablefmt='psql', showindex=False))
 
         return 0.
