@@ -254,28 +254,25 @@ class FlowRunner:
         :param source_files: a list of Path objects from which to remove failed molecules
         :return: a filtered list of Path objects
         """
-        num_conformers = get_num_conformers()
-        if num_conformers == 1:
-            return source_files
-        elif num_conformers > 1:
 
-            completed_confs = {}
+        completed_confs = {}
 
-            for f in source_files:
-                inchi_key = f.stem.split("_")[0]
+        for f in source_files:
+            inchi_key = f.stem.split("_")[0]
 
-                if inchi_key not in completed_confs:
-                    completed_confs[inchi_key] = 1
-                else:
-                    completed_confs[inchi_key] += 1
+            if inchi_key not in completed_confs:
+                completed_confs[inchi_key] = 1
+            else:
+                completed_confs[inchi_key] += 1
 
-            filtered_source_files = []
-            for f in source_files:
-                inchi_key = f.stem.split("_")[0]
-                if completed_confs[inchi_key] == num_conformers:
-                    filtered_source_files.append(f)
+        filtered_source_files = []
+        for f in source_files:
+            inchi_key = f.stem.split("_")[0]
+            num_conformers = get_num_conformers(inchi_key)
+            if completed_confs[inchi_key] == num_conformers:
+                filtered_source_files.append(f)
 
-            return filtered_source_files
+        return filtered_source_files
 
     def get_lowest_energy_confs(self, source_files: List[Path]) -> List[Path]:
         """

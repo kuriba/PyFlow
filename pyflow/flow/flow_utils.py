@@ -1,5 +1,6 @@
 import json
 import os
+from glob import glob
 from pathlib import Path
 
 from pyflow.io.io_utils import upsearch
@@ -95,21 +96,20 @@ def get_default_params_file():
     return get_path_to_pyflow() / "pyflow" / "conf" / RUN_PARAMS_FILENAME
 
 
-def get_num_conformers() -> int:
+def get_num_conformers(inchi_key: str) -> int:
     """
-    Returns the number of conformers for each molecule in the current workflow.
+    Returns the number of conformers for the molecule with the given InChIKey.
+
+    :param inchi_key: the InChIKey of the molecule
     :return: the number of conformers
     """
     params_file = upsearch(WORKFLOW_PARAMS_FILENAME)
 
-    with params_file.open() as f:
-        config = json.load(f)
-    try:
-        return config["num_conformers"]
-    except KeyError:
-        message = "'num_conformers' not yet defined in {}".format(WORKFLOW_PARAMS_FILENAME)
-        raise KeyError(message)
+    unopt_pdbs = params_file.parent / "unopt_pdbs" / "{}*.pdb".format(inchi_key)
 
+    num_conformers = len(glob(str(unopt_pdbs)))
+
+    return num_conformers
 
 def copy_to_long_term_storage() -> None:
     pass  # TODO implement copy_to_long_term_storage
