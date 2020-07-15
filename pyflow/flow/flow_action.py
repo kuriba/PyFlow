@@ -176,7 +176,7 @@ class FlowAction:
         """
         from pyflow.flow.flow_runner import FlowRunner
 
-        parser = argparse.ArgumentParser(description="Run quantum chemistry calculation")
+        parser = argparse.ArgumentParser(description="Handle output of quantum chemistry calculation")
 
         parser.add_argument(
             "-s", "--step_id",
@@ -194,7 +194,15 @@ class FlowAction:
 
         :return: None
         """
-        pass  # TODO implement progress checker
+        from pyflow.flow.flow_tracker import FlowTracker
+
+        parser = argparse.ArgumentParser(description="Check the progress of a workflow")
+
+        args = vars(parser.parse_args(sys.argv[2:]))
+
+        FlowTracker.check_progress()
+
+        # TODO implement progress checker
 
     def g16(self) -> None:
         """
