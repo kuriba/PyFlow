@@ -99,6 +99,7 @@ class FlowTracker:
             step_config = config.get_step(step_id)
 
             step_dir = workflow_dir / step_id
+            print("STEP_DIR:", step_dir)
             completed_dir = step_dir / "completed"
             failed_dir = step_dir / "failed"
             output_file_ext = FlowRunner.PROGRAM_OUTFILE_EXTENSIONS[step_config["program"]]
@@ -107,15 +108,19 @@ class FlowTracker:
                 num_jobs = len(glob(str(workflow_dir / "unopt_pdbs" / "*.pdb")))
             else:
                 num_jobs = len(glob(str(workflow_dir / "unopt_pdbs" / "*0.pdb")))
+            print("NUM_JOBS:", num_jobs)
 
             num_completed = len(glob(str(completed_dir / "*.{}".format(output_file_ext))))
             completion_rate = num_completed / num_jobs
+            print("NUM_COMPLETED:", num_completed)
 
             num_failed = len(glob(str(failed_dir / "*.{}".format(output_file_ext))))
             failure_rate = num_failed / num_jobs
+            print("NUM_FAILED:", num_failed)
 
             num_incomplete = num_jobs - num_completed
             incompletion_rate = num_incomplete / num_jobs
+            print("NUM_INCOMPLETE:", num_incomplete)
 
             running_jobs = []
             for f in glob(str(step_dir / "*.{}".format(output_file_ext))):
@@ -128,6 +133,7 @@ class FlowTracker:
 
             num_running = len(running_jobs)
             running_rate = num_running / num_jobs
+            print("NUM_RUNNING:", num_running)
 
             result_entry = {"Step ID": step_id,
                             "Completed": format_percentage(num_completed, completion_rate),
