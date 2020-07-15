@@ -1,3 +1,6 @@
+import os
+from datetime import datetime
+from glob import glob
 from pathlib import Path
 
 import pandas as pd
@@ -69,6 +72,10 @@ class FlowTracker:
 
     @staticmethod
     def check_progress(verbose: bool = False) -> float:
+        def format_percentage(total: int, percentage: float) -> str:
+            percentage_str = "({})".format(round(percentage, 1))
+            return "{0:<5} {1:>8}".format(total, percentage_str)
+
         # ensure user is in a workflow directory
         try:
             workflow_params_file = upsearch(WORKFLOW_PARAMS_FILENAME)
@@ -78,15 +85,59 @@ class FlowTracker:
             raise FileNotFoundError(msg)
 
         from pyflow.flow.flow_config import FlowConfig
+        from pyflow.flow.flow_runner import FlowRunner
+
         workflow_params = load_workflow_params()
         config_file = workflow_params["config_file"]
         config_id = workflow_params["config_id"]
 
+        results_header = ["Step ID", "Completed", "Incomplete", "Running", "Failed"]
+        results_table = pd.DataFrame(columns=results_header)
+
         config = FlowConfig(config_file, config_id)
+        for step_id in config.get_step_ids():
+            step_config = config.get_step(step_id)
 
-        all_steps = config.get_step_ids()
+            step_dir = workflow_dir / step_id
+            completed_dir = step_dir / "completed"
+            failed_dir = step_dir / "failed"
+            output_file_ext = FlowRunner.PROGRAM_OUTFILE_EXTENSIONS[step_config["program"]]
 
-        print(all_steps)
+            if step_config["conformers"]:
+                num_jobs = len(glob(str(workflow_dir / "unopt_pdbs" / "*.pdb")))
+            else:
+                num_jobs = len(glob(str(workflow_dir / "unopt_pdbs" / "*0.pdb")))
+
+            num_completed = len(glob(str(completed_dir / "*.{}".format(output_file_ext))))
+            completion_rate = num_completed / num_jobs
+
+            num_failed = len(glob(str(failed_dir / "*.{}".format(output_file_ext))))
+            failure_rate = num_failed / num_jobs
+
+            num_incomplete = num_jobs - num_completed
+            incompletion_rate = num_incomplete / num_jobs
+
+            running_jobs = []
+            for f in glob(str(step_dir / "*.{}".format(output_file_ext))):
+                mtime = datetime.fromtimestamp(os.path.getmtime(f))
+                now = datetime.now()
+
+                time_since_mtime = mtime - now
+                if time_since_mtime.min < 10:
+                    running_jobs.append(f)
+
+            num_running = len(running_jobs)
+            running_rate = num_running / num_jobs
+
+            result_entry = {"Step ID": step_id,
+                            "Completed": format_percentage(num_completed, completion_rate),
+                            "Incomplete": format_percentage(num_incomplete, incompletion_rate),
+                            "Running": format_percentage(num_running, running_rate),
+                            "Failed": format_percentage(num_failed, failure_rate)}
+
+            results_table.append(result_entry)
+
+        print(results_table.to_string(index=False))
 
         return 0.
     # TODO mark unchaged workflows
