@@ -47,7 +47,7 @@ def setup_dirs(save_location: str, workflow_name: str, config_file: str, config_
 
     # write config filename and config ID to .params file in workflow directory
     flow_instance_config_file = main_dir / WORKFLOW_PARAMS_FILENAME
-    flow_instance_config = {"config_file": str(config_file),
+    flow_instance_config = {"config_file": str(Path(config_file).resolve()),
                             "config_id": str(config_id)}
 
     with flow_instance_config_file.open("w") as f:
