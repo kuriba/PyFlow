@@ -220,7 +220,7 @@ def main(args: dict) -> None:
     gamess_writer = GamessWriter(geometry_file=args.pop("geometry_file"),
                                  geometry_format=args.pop("geometry_format"),
                                  filepath=filepath,
-                                 overwrite_mode=args.pop("overwrite"),
+                                 overwrite=args.pop("overwrite"),
                                  **args)
     gamess_writer.write()
 

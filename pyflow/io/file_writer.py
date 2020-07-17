@@ -13,16 +13,16 @@ class FileWriter:
     Generalized class for writing text to a file.
     """
 
-    def __init__(self, filepath: Path, text: str = "", overwrite_mode: bool = False):
+    def __init__(self, filepath: Path, text: str = "", overwrite: bool = False):
         """
 
         :param filepath: the path to the write file
         :param text: the text to write
-        :param overwrite_mode: if True, will overwrite specified file without prompting user
+        :param overwrite: if True, will overwrite specified file without prompting user
         """
         self.filepath = Path(filepath).resolve()
         self.text = text
-        self.overwrite_mode = overwrite_mode
+        self.overwrite = overwrite
 
     def write(self):
         """
@@ -30,7 +30,7 @@ class FileWriter:
 
         :return: None
         """
-        if self.overwrite_mode or not self.filepath.exists():
+        if self.overwrite or not self.filepath.exists():
             self.filepath.write_text(self.text)
         else:
             message = "{} already exists. Do you wish to overwrite this file?" \
@@ -67,7 +67,7 @@ class AbstractInputFileWriter(FileWriter):
                  geometry_file: Path,
                  geometry_format: str,
                  filepath: Path = None,
-                 overwrite_mode: bool = False,
+                 overwrite: bool = False,
                  **kwargs):
         """
         Constructor for an AbstractInputFileWriter. This class abstracts the most
@@ -77,13 +77,13 @@ class AbstractInputFileWriter(FileWriter):
         :param filepath:
         :param geometry_file:
         :param geometry_format:
-        :param overwrite_mode:
+        :param overwrite:
         :param kwargs:
         """
         if filepath is None:
             filepath = Path().cwd() / geometry_file.name
 
-        super().__init__(filepath=filepath, overwrite_mode=overwrite_mode)
+        super().__init__(filepath=filepath, overwrite=overwrite)
 
         self.args = {"title": filepath.stem,
                      "location": filepath.parent,

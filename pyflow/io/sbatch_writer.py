@@ -19,9 +19,9 @@ class SbatchWriter(FileWriter):
                  filepath: Path,
                  commands: str,
                  jobname: str = None,
-                 overwrite_mode: bool = False,
+                 overwrite: bool = False,
                  **kwargs):
-        super().__init__(filepath=filepath, overwrite_mode=overwrite_mode)
+        super().__init__(filepath=filepath, overwrite=overwrite)
 
         self.jobname = jobname
         self.commands = commands

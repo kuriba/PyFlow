@@ -167,6 +167,6 @@ def main(args: dict) -> None:
     gaussian_writer = GaussianWriter(filepath=filepath,
                                      geometry_file=args.pop("geometry_file"),
                                      geometry_format=args.pop("geometry_format"),
-                                     overwrite_mode=args.pop("overwrite"),
+                                     overwrite=args.pop("overwrite"),
                                      **args)
     gaussian_writer.write()
