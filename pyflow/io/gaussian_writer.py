@@ -35,13 +35,14 @@ class GaussianWriter(AbstractInputFileWriter):
         # memory and processor specification
         self.append("%mem={}GB\n%nproc={}\n".format(self.args["memory"], self.args["nproc"]))
 
-        # route, title, charge, and multiplicity
+        # route
         self.append("{}\n\n".format(self.args["route"]))
-        self.append("{}\n\n".format(self.args["title"]))
-        self.append("{} {}\n".format(self.args["charge"], self.args["multiplicity"]))
 
-        # coordinates
-        self.append("{}\n".format(coordinates))
+        # title, charge, multiplicity, and coordinates
+        if not self.args.get("no_mol_info", False):
+            self.append("{}\n\n".format(self.args["title"]))
+            self.append("{} {}\n".format(self.args["charge"], self.args["multiplicity"]))
+            self.append("{}\n".format(coordinates))
 
         if self.args.get("verbose", False):
             print("\n" + self.get_text())
@@ -123,19 +124,24 @@ def parse_args(sys_args: List[str]) -> dict:
         default=argparse.SUPPRESS,
         required="--formats" not in sys.argv and "-f" not in sys.argv)
     molecule_options.add_argument(
-        "-gf", "--geometry_format",
+        "--geometry_format",
         type=str,
         help="the format of the input geometry file")
     molecule_options.add_argument(
-        "-sm", "--smiles_geometry_file",
+        "--smiles_geometry_file",
         type=str,
         help="path to geometry file to used to determine the SMILES and charge",
         default=argparse.SUPPRESS)
     molecule_options.add_argument(
-        "-smf", "--smiles_geometry_format",
+        "--smiles_geometry_format",
         type=str,
         help="path to geometry file to used to determine the SMILES and charge",
         default=argparse.SUPPRESS)
+    molecule_options.add_argument(
+        "--no_mol_info",
+        action="store_true",
+        help="do not write charge, multiplicity, coordinates, and title to input file",
+        default=False)
 
     # file management options
     file_group = parser.add_argument_group("File management options")
