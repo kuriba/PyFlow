@@ -37,7 +37,7 @@ class FlowTracker:
     def track_new_flow(self, **attributes):
         if self.workflow_id_exists():
             raise ValueError(
-                "Workflow ID '{}' already exists.".format(self.workflow_id))
+                "workflow ID '{}' already exists.".format(self.workflow_id))
         else:
             try:
                 tracked_flows = pd.read_csv(FlowTracker.TRACK_FILE, index_col=False)
@@ -55,7 +55,7 @@ class FlowTracker:
 
             if missing_attributes:
                 missing_attributes = ",".join(map(str, missing_attributes))
-                raise ValueError("The following attributes are missing: {}".format(
+                raise ValueError("the following attributes are missing: {}".format(
                     missing_attributes))
 
             tracked_flows = tracked_flows.append(new_workflow_entry, ignore_index=True, sort=False)
@@ -126,7 +126,7 @@ class FlowTracker:
                 now = datetime.now()
 
                 time_since_mtime = now - mtime
-                if time_since_mtime.days < 10:
+                if time_since_mtime.seconds < (5 * 60):
                     running_jobs.append(f)
 
             num_running = len(running_jobs)
