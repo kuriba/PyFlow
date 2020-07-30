@@ -97,7 +97,7 @@ class SbatchWriter(FileWriter):
         return job_id
 
 
-def parse_args(sys_args: List[str]) -> None:
+def parse_args(sys_args: List[str]) -> dict:
     # default configuration options
     config = load_run_params(program="slurm")
 
