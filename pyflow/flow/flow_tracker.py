@@ -1,5 +1,6 @@
 import os
 from datetime import datetime
+from getpass import getuser
 from glob import glob
 from pathlib import Path
 
@@ -29,15 +30,22 @@ class FlowTracker:
         """
         self.workflow_id = workflow_id
 
-    def update_progress(self, **kwargs):
+    @staticmethod
+    def update_progress(workflow_id: str) -> None:
         """Updates progress attribute in csv file"""
-        # TODO write update method for FlowTracker
-        pass
 
-    def track_new_flow(self, **attributes):
+        flow_tracker = FlowTracker(workflow_id)
+
+        current_progress = FlowTracker.check_progress(verbose=False)
+        formatted_progress = "{}%".format(current_progress)
+
+        df = pd.read_csv(FlowTracker.TRACK_FILE, index_col=False)
+        df.loc[df["workflow_id"] == flow_tracker.workflow_id, "progress"] = formatted_progress
+        df.to_csv(FlowTracker.TRACK_FILE, index=False)
+
+    def track_flow(self, **attributes):
         if self.workflow_id_exists():
-            raise ValueError(
-                "workflow ID '{}' already exists.".format(self.workflow_id))
+            raise ValueError("workflow ID '{}' already exists.".format(self.workflow_id))
         else:
             try:
                 tracked_flows = pd.read_csv(FlowTracker.TRACK_FILE, index_col=False)
@@ -65,6 +73,10 @@ class FlowTracker:
             tracked_flows.to_csv(FlowTracker.TRACK_FILE, index=False)
 
     def workflow_id_exists(self) -> bool:
+        """
+        Determines if the workflow_id
+        :return:
+        """
         try:
             tracked_workflow_ids = pd.read_csv(FlowTracker.TRACK_FILE)["workflow_id"]
             return self.workflow_id in set(tracked_workflow_ids)
@@ -72,7 +84,7 @@ class FlowTracker:
             return False
 
     @staticmethod
-    def check_progress(verbose: bool = False) -> float:
+    def check_progress(verbose: bool = True) -> float:
         def format_percentage(total: int, percentage: float) -> str:
             percentage_str = "({}%)".format(round(percentage * 100, 1))
             return "{0:<3} {1:>8}".format(total, percentage_str)
@@ -98,6 +110,8 @@ class FlowTracker:
         config = FlowConfig(config_file, config_id)
         num_molecules = len(glob(str(workflow_dir / "unopt_pdbs" / "*0.pdb")))
         num_structures = len(glob(str(workflow_dir / "unopt_pdbs" / "*.pdb")))
+        total_num_completed = 0
+        total_num_calcs = 0
         for step_id in config.get_step_ids():
             step_config = config.get_step(step_id)
 
@@ -110,9 +124,11 @@ class FlowTracker:
                 num_jobs = num_structures
             else:
                 num_jobs = num_molecules
+            total_num_calcs += num_jobs
 
             num_completed = len(glob(str(completed_dir / "*.{}".format(output_file_ext))))
             completion_rate = num_completed / num_jobs
+            total_num_completed += num_completed
 
             num_failed = len(glob(str(failed_dir / "*.{}".format(output_file_ext))))
             failure_rate = num_failed / num_jobs
@@ -132,18 +148,74 @@ class FlowTracker:
             num_running = len(running_jobs)
             running_rate = num_running / num_jobs
 
-            result_entry = {"Step ID": step_id,
-                            "Completed": format_percentage(num_completed, completion_rate),
-                            "Incomplete": format_percentage(num_incomplete, incompletion_rate),
-                            "Running": format_percentage(num_running, running_rate),
-                            "Failed": format_percentage(num_failed, failure_rate)}
+            if verbose:
+                result_entry = {"Step ID": step_id,
+                                "Completed": format_percentage(num_completed, completion_rate),
+                                "Incomplete": format_percentage(num_incomplete, incompletion_rate),
+                                "Running": format_percentage(num_running, running_rate),
+                                "Failed": format_percentage(num_failed, failure_rate)}
 
-            results_table = results_table.append(result_entry, ignore_index=True, sort=False)
+                results_table = results_table.append(result_entry, ignore_index=True, sort=False)
 
-        current_time_str = "[{}]".format(datetime.now().strftime("%b %d %Y %X"))
-        print("\nProgress report for workflow '{}' {}".format(workflow_dir.name, current_time_str))
-        print("Num. Molecules: {} ({})".format(num_molecules, num_structures))
-        print(tabulate(results_table, headers="keys", tablefmt='psql', showindex=False))
+        total_completion_rate = round(100 * (total_num_completed / total_num_calcs), 1)
 
-        return 0.
-    # TODO mark unchaged workflows
+        if verbose:
+            current_time_str = "[{}]".format(datetime.now().strftime("%b %d %Y %X"))
+            print("\nProgress report for workflow '{}' {}".format(workflow_dir.name, current_time_str))
+            print("Num. Molecules: {} ({})".format(num_molecules, num_structures))
+            print(tabulate(results_table, headers="keys", tablefmt='psql', showindex=False))
+            print("Overall completion rate: {}/{} ({}%)".format(total_num_completed, total_num_calcs,
+                                                                total_completion_rate))
+
+        return total_completion_rate
+
+    @staticmethod
+    def track_new_flow(config_file: Path, config_id: str, workflow_main_dir: Path) -> None:
+        """
+        Adds the specified workflow to the tracked_workflows.csv file. The workflow is
+        added as a new row with columns for the config filepath, config_id, user,
+        the run directory, the submission date and time, and the progress.
+
+        :param config_file: a Path object pointing to the workflow config file for the current workflow
+        :param config_id: the configuration ID for the current workflow
+        :param workflow_main_dir: the main directory in where the workflow is running
+        :return: None
+        """
+
+        # workflow tracking
+        print("Tracking workflow...")
+        workflow_id = workflow_main_dir.name
+        flow_tracker = FlowTracker(workflow_id=workflow_id)
+
+        new_flow_info = {"config_file": config_file.as_posix(),
+                         "config_id": config_id,
+                         "user": getuser(),
+                         "run_directory": workflow_main_dir.as_posix(),
+                         "submission_date": datetime.today().strftime("%d-%m-%Y"),
+                         "submission_time": datetime.today().strftime("%H:%M:%S"),
+                         "progress": "0%"}
+
+        flow_tracker.track_flow(**new_flow_info)
+
+    @staticmethod
+    def view_tracked_flows(workflow_id: str = None, user: str = None, config_file: str = None) -> None:
+        """
+        Method for viewing a list of tracked workflows.
+
+        :param workflow_id: the workflow ID to view
+        :param user: the user to view
+        :param config_file: the path to the config file to view
+        :return: None
+        """
+
+        df = pd.read_csv(FlowTracker.TRACK_FILE, index_col=False)
+
+        if workflow_id is not None:
+            df = df.loc[df["workflow_id"] == workflow_id]
+        if user is not None:
+            df = df.loc[df["user"] == user]
+        if config_file is not None:
+            config_file = Path(config_file).resolve()
+            df = df.loc[df["config_file"] == config_file]
+
+        print(tabulate(df, headers="keys", tablefmt='psql', showindex=False))
