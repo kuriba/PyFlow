@@ -13,8 +13,8 @@ class FlowAction:
     :meth:`main<pyflow.flow.command_line.main>` function in :mod:`pyflow.flow.command_line`
     """
 
-    ACTION_CHOICES = ('begin', 'run', 'handle', 'progress', 'setup', 'conformers',
-                      'g16', 'sbatch', 'update', 'build_config')
+    ACTION_CHOICES = ('begin', 'run', 'handle', 'progress', 'tracker', 'setup',
+                      'conformers', 'g16', 'sbatch', 'update', 'build_config')
 
     ACTION_HELP = textwrap.dedent("""
         Actions:
@@ -22,6 +22,7 @@ class FlowAction:
         run = run a calculation as part of an array
         handle = handle a completed, failed, or timed-out calculation
         progress = display the progress for the current workflow
+        tracker = view a list of all tracked workflows
         setup = set up a directory for a new workflow
         conformers = generate conformers
         g16 = write a Gaussian 16 input file
@@ -70,7 +71,6 @@ class FlowAction:
     def setup(self) -> None:
         """
         Method used to set up workflow directories from the command line.
-
         :return: None
         """
         from pyflow.flow.setup_flow import setup_dirs
@@ -110,15 +110,14 @@ class FlowAction:
     def conformers(self) -> None:
         """
         Generates a library of conformers based on the given core.
-        :return:
+        :return: None
         """
         pass  # TODO implement conformer generation
 
     def begin(self) -> None:
         """
         Begins running a workflow.
-
-        :return:
+        :return: None
         """
         from pyflow.flow.begin_step import begin_step
 
@@ -144,7 +143,6 @@ class FlowAction:
     def run(self) -> None:
         """
         Runs a quantum chemistry calculation as part of a Slurm array.
-
         :return:
         """
         from pyflow.flow.flow_runner import FlowRunner
@@ -182,7 +180,7 @@ class FlowAction:
             "-s", "--step_id",
             type=str,
             required=True,
-            help="the step ID to run")
+            help="the step ID to handle")
 
         args = vars(parser.parse_args(sys.argv[2:]))
 
@@ -191,7 +189,6 @@ class FlowAction:
     def progress(self) -> None:
         """
         Method used to display current workflow progress.
-
         :return: None
         """
         from pyflow.flow.flow_tracker import FlowTracker
@@ -202,12 +199,41 @@ class FlowAction:
 
         FlowTracker.check_progress()
 
-        # TODO implement progress checker
+    def tracker(self) -> None:
+        """
+        Method for displaying tracked workflows.
+        :return: None
+        """
+
+        from pyflow.flow.flow_tracker import FlowTracker
+
+        parser = argparse.ArgumentParser(description="View tracked workflows")
+
+        parser.add_argument(
+            "-w", "--workflow_id",
+            type=str,
+            required=True,
+            help="the workflow ID to view")
+
+        parser.add_argument(
+            "-u", "--user",
+            type=str,
+            required=True,
+            help="the name of the user whose workflows to view")
+
+        parser.add_argument(
+            "-c", "--config_file",
+            type=str,
+            required=True,
+            help="the config file to view")
+
+        args = vars(parser.parse_args(sys.argv[2:]))
+
+        FlowTracker.view_tracked_flows(**args)
 
     def g16(self) -> None:
         """
         Method used to create Gaussian 16 input files.
-
         :return: None
         """
         from pyflow.io import gaussian_writer
@@ -219,7 +245,6 @@ class FlowAction:
     def sbatch(self) -> None:
         """
         Method used to create Slurm submission scripts.
-
         :return: None
         """
         from pyflow.io import sbatch_writer
@@ -231,7 +256,6 @@ class FlowAction:
     def update(self) -> None:
         """
         Method used to update Pyflow source code with most recent GitHub version.
-
         :return: None
         """
         import git
@@ -242,7 +266,6 @@ class FlowAction:
     def build_config(self) -> None:
         """
         Method used to build a workflow configuration file.
-
         :return: None
         """
         from pyflow.flow.flow_config import FlowConfig
