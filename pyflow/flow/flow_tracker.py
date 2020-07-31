@@ -215,7 +215,7 @@ class FlowTracker:
         if user is not None:
             df = df.loc[df["user"] == user]
         if config_file is not None:
-            config_file = Path(config_file).resolve()
+            config_file = Path(config_file).resolve().as_posix()
             df = df.loc[df["config_file"] == config_file]
 
         print(tabulate(df, headers="keys", tablefmt='psql', showindex=False))
