@@ -25,7 +25,6 @@ class FlowTracker:
     def __init__(self, workflow_id: str):
         """
         Constructs a workflow tracker.
-
         :param workflow_id: the name of the workflow
         """
         self.workflow_id = workflow_id
@@ -43,7 +42,12 @@ class FlowTracker:
         df.loc[df["workflow_id"] == flow_tracker.workflow_id, "progress"] = formatted_progress
         df.to_csv(FlowTracker.TRACK_FILE, index=False)
 
-    def track_flow(self, **attributes):
+    def track_flow(self, **attributes) -> None:
+        """
+        Tracks the given attributes in the tracked_workflows.csv file.
+        :param attributes: the attributes and values to track
+        :return: None
+        """
         if self.workflow_id_exists():
             raise ValueError("workflow ID '{}' already exists.".format(self.workflow_id))
         else:
@@ -74,8 +78,8 @@ class FlowTracker:
 
     def workflow_id_exists(self) -> bool:
         """
-        Determines if the workflow_id
-        :return:
+        Determines if the workflow_id exists in the tracked_workflows.csv file.
+        :return: True if the workflow_id exists, False otherwise
         """
         try:
             tracked_workflow_ids = pd.read_csv(FlowTracker.TRACK_FILE)["workflow_id"]
@@ -85,7 +89,17 @@ class FlowTracker:
 
     @staticmethod
     def check_progress(verbose: bool = True) -> float:
+        """
+        Checks the progress of the current workflow directory and prints a progress
+        report to the command line (if ``verbose == True``). Returns a float representing
+        the completion rate for the workflow (calculated as the quotient of the total
+        number of completed calculations and the total number of expected calculations).
+        :param verbose: if True, prints progress report to command line
+        :return: the percentage of completed calculations for the current workflow directory
+        """
+
         def format_percentage(total: int, percentage: float) -> str:
+            """Formats total count and percentage into a string"""
             percentage_str = "({}%)".format(round(percentage * 100, 1))
             return "{0:<3} {1:>8}".format(total, percentage_str)
 
@@ -175,7 +189,6 @@ class FlowTracker:
         Adds the specified workflow to the tracked_workflows.csv file. The workflow is
         added as a new row with columns for the config filepath, config_id, user,
         the run directory, the submission date and time, and the progress.
-
         :param config_file: a Path object pointing to the workflow config file for the current workflow
         :param config_id: the configuration ID for the current workflow
         :param workflow_main_dir: the main directory in where the workflow is running
@@ -201,7 +214,6 @@ class FlowTracker:
     def view_tracked_flows(workflow_id: str = None, user: str = None, config_file: str = None) -> None:
         """
         Method for viewing a list of tracked workflows.
-
         :param workflow_id: the workflow ID to view
         :param user: the user to view
         :param config_file: the path to the config file to view
