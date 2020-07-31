@@ -104,7 +104,6 @@ class FlowRunner:
         """
         Determines if the current step (``self.current_step_id``) is the first step
         in the workflow.
-
         :return: True if the current step is the first, False otherwise
         """
         return self.current_step_id == self.flow_config.get_initial_step_id()
@@ -112,7 +111,6 @@ class FlowRunner:
     def get_prev_step_id(self) -> str:
         """
         Returns the ID of the previous step.
-
         :return: the ID of the previous step
         """
         return self.flow_config.get_previous_step_id(self.current_step_id)
@@ -124,7 +122,6 @@ class FlowRunner:
         step in the workflow, the source structures are found in the ``unopt_pdbs``
         folder of the workflow. Otherwise, the source structures are found in the
         ``completed`` folder of the preceding step.
-
         :return: a list of paths to the source structures
         """
         if self.is_first_step():
@@ -244,21 +241,22 @@ class FlowRunner:
         Filters the conformers based on various workflow step parameters. The
         list of Path objects is filtered by removing failed conformers and/or by
         removing all but the lowest energy conformers.
-
         :param source_files: a list of Path objects to filter
         :return: a filtered list of Path objects
         """
-        if not self.current_step_config["proceed_on_failed_conf"]:
-            source_files = self.remove_failed_confs(source_files)
-        if self.need_lowest_energy_confs():
-            source_files = self.get_lowest_energy_confs(source_files)
+        prev_step_id = self.get_prev_step_id()
+        if self.flow_config.get_step(prev_step_id)["conformers"]:
+            if not self.is_first_step():
+                if not self.flow_config.get_step(prev_step_id)["proceed_on_failed_conf"]:
+                    source_files = self.remove_failed_confs(source_files)
+            if self.need_lowest_energy_confs():
+                source_files = self.get_lowest_energy_confs(source_files)
         return source_files
 
     def remove_failed_confs(self, source_files: List[Path]) -> List[Path]:
         """
         Returns a list of Path objects where the molecules for which all conformers
         have not successfully completed are removed.
-
         :param source_files: a list of Path objects from which to remove failed molecules
         :return: a filtered list of Path objects
         """
