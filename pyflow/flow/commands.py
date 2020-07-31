@@ -1,6 +1,8 @@
 class Commands:
     """
-
+    Class with various static methods for constructing commands used to perform
+    workflow actions such as beginning workflow steps, running calculations,
+    and handling their outputs.
     """
 
     @staticmethod
