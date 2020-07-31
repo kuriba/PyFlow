@@ -80,15 +80,16 @@ class FlowRunner:
         self.current_step_dir = self.workflow_dir / self.current_step_id
         self.step_program = self.flow_config.get_step(current_step_id)["program"]
 
-    def run(self, show_progress: bool = False) -> None:
+    def run(self, show_progress: bool = False, overwrite: bool = True) -> None:
         """
         Sets up the current workflow step by creating input files and submission scripts,
-        and submits job for calculation.
+        and submits array for calculation.
 
         :param show_progress: displays progress bars in CLI if True
+        :param overwrite: will overwrite existing input files if True
         :return: None
         """
-        self.setup_input_files(show_progress)
+        self.setup_input_files(show_progress, overwrite)
 
         num_input_files = self._create_job_list_file()
 
@@ -129,7 +130,9 @@ class FlowRunner:
         if self.is_first_step():
             source_structures_path = self.workflow_dir / "unopt_pdbs"
             source_file_extension = "pdb"
-            structure_files = list(source_structures_path.glob("*.{}".format(source_file_extension)))
+
+            pattern = "*.{}".format(source_file_extension)
+            structure_files = list(source_structures_path.glob(pattern))
         else:
             # determine the previous step
             prev_step_id = self.get_prev_step_id()
@@ -178,11 +181,12 @@ class FlowRunner:
 
         return input_filenames
 
-    def setup_input_files(self, show_progress: bool) -> None:
+    def setup_input_files(self, show_progress: bool, overwrite: bool) -> None:
         """
         Sets up input files for the current workflow step.
 
         :param show_progress: displays progress bar in CLI if True
+        :param overwrite: will automatically overwrite existing input files if True
         :return: None
         """
         structure_files = self.get_source_structures()
@@ -208,14 +212,18 @@ class FlowRunner:
             input_filename = f[0]
             source_geometry = f[1]
             inchi_key = input_filename.stem.split("_")[0]
-            unopt_pdb_file = self.workflow_dir / "unopt_pdbs" / "{}_0.pdb".format(inchi_key)
+            unopt_pdb_file = self.get_unopt_pdb_file(inchi_key)
             input_writer = input_writer.from_config(step_config=self.current_step_config,
                                                     filepath=input_filename,
                                                     geometry_file=source_geometry,
                                                     geometry_format=source_structure_format,
                                                     smiles_geometry_file=unopt_pdb_file,
-                                                    smiles_geometry_format="pdb")
+                                                    smiles_geometry_format="pdb",
+                                                    overwrite=overwrite)
             input_writer.write()
+
+    def get_unopt_pdb_file(self, inchi_key: str):
+        return self.workflow_dir / "unopt_pdbs" / "{}_0.pdb".format(inchi_key)
 
     def need_lowest_energy_confs(self) -> bool:
         """
@@ -342,7 +350,7 @@ class FlowRunner:
                                                  cores=self.current_step_config["nproc"],
                                                  output="%A_%a.o",
                                                  error="%A_%a.e",
-                                                 overwrite_mode=True)
+                                                 overwrite=True)
         sbatch_writer.write()
 
         return sbatch_writer
@@ -410,7 +418,7 @@ class FlowRunner:
                                          error="/dev/null",
                                          dependency_id=job_id,
                                          dependency_type="afterany",
-                                         overwrite_mode=True)
+                                         overwrite=True)
             sbatch_writer.write()
             sbatch_writer.submit()
 
@@ -506,13 +514,15 @@ class FlowRunner:
         """
         output_filepath = Path(output_file).resolve()
         if self.step_program == "gaussian16":
-            matches = find_string(output_filepath, "Normal termination")
+            num_matches = len(find_string(output_filepath, "Normal termination"))
             opt_freq = sum([self.current_step_config["opt"], self.current_step_config["freq"]])
-            sp = sum([self.current_step_config["single_point"]])
-            return len(matches) == opt_freq or len(matches) == sp
+            if opt_freq > 0:
+                return num_matches == opt_freq
+            elif self.current_step_config["single_point"]:
+                return num_matches == 1
         elif self.step_program == "gamess":
-            matches = find_string(output_filepath, "TERMINATED NORMALLY")
-            return len(matches) == sum([self.current_step_config["opt"]])
+            num_matches = find_string(output_filepath, "TERMINATED NORMALLY")
+            return num_matches == sum([self.current_step_config["opt"]])
         else:
             raise AttributeError("Unknown program: {}".format(self.step_program))
 
@@ -544,14 +554,38 @@ class FlowRunner:
             for f in glob("{}*".format(output_file.with_suffix(""))):
                 shutil.move(f, str(completed_dest))
 
+            flow_runner._clear_scratch_files(input_file.stem)
+
         elif flow_runner.current_step_config["attempt_restart"]:
-            pass  # TODO implement restarting
+            pass
+            try:
+                flow_runner.update_input_file(input_file, output_file)
+            except NotImplementedError:
+                pass
         else:
             failed_dest = flow_runner.current_step_dir / "failed"
 
             # move completed input/output files
             for f in glob("{}*".format(output_file.with_suffix(""))):
                 shutil.move(f, str(failed_dest))
+
+    def _clear_scratch_files(self, filename: str):
+        if self.step_program == "gamess":
+            gamess_scr = Path(os.environ["USERSCR"]).resolve()
+            scratch_files = [Path(f) for f in glob(gamess_scr / "{}*.*".format(filename))]
+            for f in scratch_files:
+                f.unlink()
+
+    def update_input_file(self, input_file: Path, output_file: Path):
+        if self.step_program == "gaussian16":
+            from pyflow.flow.gaussian_restarter import GaussianRestarter
+            inchi_key = input_file.name.split("_")[0]
+            unopt_pdb_file = self.get_unopt_pdb_file(inchi_key)
+            restarter = GaussianRestarter(input_file, output_file, unopt_pdb_file)
+            restarter.update_input_file()
+        else:
+            msg = "Restarting '{}' calculations is not yet supported.".format(self.step_program)
+            raise NotImplementedError(msg)
 
     @staticmethod
     def _remove_array_files() -> None:
