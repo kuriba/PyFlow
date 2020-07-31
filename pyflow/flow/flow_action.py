@@ -212,19 +212,16 @@ class FlowAction:
         parser.add_argument(
             "-w", "--workflow_id",
             type=str,
-            required=True,
             help="the workflow ID to view")
 
         parser.add_argument(
             "-u", "--user",
             type=str,
-            required=True,
             help="the name of the user whose workflows to view")
 
         parser.add_argument(
             "-c", "--config_file",
             type=str,
-            required=True,
             help="the config file to view")
 
         args = vars(parser.parse_args(sys.argv[2:]))
