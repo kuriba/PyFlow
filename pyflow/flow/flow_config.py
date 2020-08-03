@@ -11,12 +11,11 @@ RUN_PARAMS = load_run_params()
 
 class FlowConfig:
     """
-    Class for parsing and storing the configuration file of a workflow. The
-    configuration file is named ``.flow_config`` and is found at the root of a
-    workflow directory. It uses the JSON format to store the calculation steps
-    for a workflow.
+    Class for parsing and storing the configuration file of a workflow. It uses
+    the JSON format to store the calculation steps for a workflow.
 
-    The general structure of the dictionary is as follows:
+    The general structure of the dictionary is as follows, where the "default"
+    key is config_id that points to the number of :
     ::
         { "default":
             {
@@ -35,7 +34,82 @@ class FlowConfig:
             }
         }
 
-    #TODO define and list flow_config parameters
+    Below is a list of general step parameters that are supported by all QC programs:
+
+    +----------------------------+----------------------------------------------------+------------------+
+    | Parameter                  | Description                                        | Data type        |
+    +============================+====================================================+==================+
+    | ``program``                | the QC program to use                              | ``str``          |
+    +----------------------------+----------------------------------------------------+------------------+
+    | ``opt``                    | whether the step includes an optimization          | ``bool``         |
+    +----------------------------+----------------------------------------------------+------------------+
+    | ``freq``                   | whether the step includes a frequency calculation  | ``bool``         |
+    +----------------------------+----------------------------------------------------+------------------+
+    | ``single_point``           | whether the step is a single-point calculation     | ``bool``         |
+    +----------------------------+----------------------------------------------------+------------------+
+    | ``conformers``             | whether the step has conformers                    | ``bool``         |
+    +----------------------------+----------------------------------------------------+------------------+
+    | ``proceed_on_failed_conf`` | if True, allow molecules with failed conformers    | ``bool``         |
+    |                            | to proceed to the next step                        |                  |
+    +----------------------------+----------------------------------------------------+------------------+
+    | ``attempt_restart``        | whether to attempt to restart a calculation upon   | ``bool``         |
+    |                            | timeout or failure                                 |                  |
+    +----------------------------+----------------------------------------------------+------------------+
+    | ``nproc``                  | number of cores to request through Slurm           | ``int``          |
+    +----------------------------+----------------------------------------------------+------------------+
+    | ``memory``                 | amount of memory to request in GB                  | ``int``          |
+    +----------------------------+----------------------------------------------------+------------------+
+    | ``time``                   | the time limit for the calculation in minutes      | ``int``          |
+    +----------------------------+----------------------------------------------------+------------------+
+    | ``time_padding``           | the time limit for processing/handling calculation | ``int``          |
+    |                            | outputs (the overall time limit for the Slurm      |                  |
+    |                            | submission is ``time + time_padding``)             |                  |
+    +----------------------------+----------------------------------------------------+------------------+
+    | ``partition``              | the partition to request for the step              | ``str``          |
+    +----------------------------+----------------------------------------------------+------------------+
+    | ``simul_jobs``             | the number of jobs to simultaneously run           | ``int``          |
+    +----------------------------+----------------------------------------------------+------------------+
+    | ``save_outputs``           | whether to save the results of a step in           | ``bool``         |
+    |                            | /work/lopez/workflows                              |                  |
+    +----------------------------+----------------------------------------------------+------------------+
+    | ``dependents``             | a list of step IDs that are to be run after the    | ``List[string]`` |
+    |                            | completion of the current step                     |                  |
+    +----------------------------+----------------------------------------------------+------------------+
+    | ``charge``                 | the charge by which to increment all molecules     | ``int``          |
+    +----------------------------+----------------------------------------------------+------------------+
+    | ``multiplicity``           | the multiplicity of the molecules                  | ``int``          |
+    +----------------------------+----------------------------------------------------+------------------+
+
+    Supported step parameters specific to certain QC programs are shown below
+    (refer to the documentation specific to each QC program for more details on
+    valid arguments for each parameter):
+
+    +-------------+----------------------------+---------------------------------------------------+------------------+
+    | QC program  | Parameter                  | Description                                       | Data type        |
+    +=============+============================+===================================================+==================+
+    | gaussian16  | ``route`` *                | the full route for the calculation                | ``str``          |
+    |             +----------------------------+---------------------------------------------------+------------------+
+    |             | ``rwf``                    | whether to save the .rwf file                     | ``bool``         |
+    |             +----------------------------+---------------------------------------------------+------------------+
+    |             | ``chk``                    | whether to save the .chk file                     | ``bool``         |
+    +-------------+----------------------------+---------------------------------------------------+------------------+
+    | gamess      | ``gbasis`` *               | Gaussian basis set specification                  | ``str``          |
+    |             +----------------------------+---------------------------------------------------+------------------+
+    |             | ``runtyp``                 | the type of computation                           | ``str``          |
+    |             |                            | (e.g., energy, gradient, etc.)                    |                  |
+    |             +----------------------------+---------------------------------------------------+------------------+
+    |             | ``dfttyp``                 | DFT functional to use (ab initio if unspecified)  | ``str``          |
+    |             +----------------------------+---------------------------------------------------+------------------+
+    |             | ``maxit``                  | maximum number of SCF iteration cycles            | ``int``          |
+    |             +----------------------------+---------------------------------------------------+------------------+
+    |             | ``opttol``                 | gradient convergence tolerance, in Hartree/Boh    | ``float``        |
+    |             +----------------------------+---------------------------------------------------+------------------+
+    |             | ``hess``                   | selects the initial hessian matrix                | ``str``          |
+    |             +----------------------------+---------------------------------------------------+------------------+
+    |             | ``nstep``                  | maximum number of steps to take                   | ``int``          |
+    |             +----------------------------+---------------------------------------------------+------------------+
+    |             | ``idcver``                 | the dispersion correction implementation to use   | ``int``          |
+    +-------------+----------------------------+---------------------------------------------------+------------------+
     """
 
     # list of supported programs
@@ -101,7 +175,6 @@ class FlowConfig:
         Constructs a FlowConfig object which stores the configuration of the
         current workflow. The FlowConfig object validates the contents of the
         config file and makes it simple to determine the next steps
-
         :param config_file:
         :param config_id:
         """
@@ -128,9 +201,8 @@ class FlowConfig:
         + ``"dependents"``
         + ``"conformers"``
 
-        For more details on the ``.flow_config`` file and accepted parameters
+        For more details on flow configuration files and their accepted parameters
         see :class:`pyflow.flow.flow_config.FlowConfig`.
-
         :param config_file: path to the config file
         :param config_id: unique string ID for the desired workflow configuration
         :return: a dictionary with a workflow configuration
@@ -150,7 +222,6 @@ class FlowConfig:
         """
         Determines if the given config is validly formatted and contains
         parameters required by each program.
-
         :param config: a dictionary representing a workflow configuration
         :return: True if the workflow configuration is valid, False otherwise
         """
@@ -227,9 +298,9 @@ class FlowConfig:
     @staticmethod
     def build_config(config_file: str, config_id: str, verbose: bool = False) -> None:
         """
-        Function for helping the user build a flow configuration file for a custom
-        workflow.
-
+        Method for helping the user build a flow configuration file for a custom
+        workflow. Asks the user a series of command-line queries to construct the
+        configuration file.
         :return: None
         """
         import copy
