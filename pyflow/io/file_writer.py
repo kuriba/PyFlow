@@ -104,7 +104,7 @@ class AbstractInputFileWriter(FileWriter):
                                                   geometry_format=geometry_format,
                                                   output_format=self.get_openbabel_format())
 
-        # charge and multiplicity
+        # charge
         if self.args.get("smiles_geometry_file") is None:
             self.args["smiles_geometry_file"] = self.args["geometry_file"]
             self.args["smiles_geometry_format"] = self.args["geometry_format"]
