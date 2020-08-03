@@ -178,7 +178,7 @@ def parse_args():
     dft_group.add_argument(
         "-id", "--idcver",
         type=int,
-        help="select dispersion correction implementation")
+        help="the dispersion correction implementation to use")
 
     # $DATA section
     data_group = parser.add_argument_group("$DATA group")
