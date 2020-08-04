@@ -129,11 +129,15 @@ class GaussianRestarter:
     # Removes the rwf files associated with the given log file
     def clear_gau_files(self):
         with self.output_file.open() as f:
+            p_id = None
+            inp_id = None
             for line in f:
                 line = line.strip()
                 if "/Gau-" in line:
+                    print(line)
                     inp_id = line.split()[1].strip("\"").split("/")[-1].split("-")[1][:5]
                 elif line.startswith("Entering Link 1"):
+                    print(line)
                     p_id = line.split()[-1].replace(".", "")
 
                 if p_id is not None and inp_id is not None:
