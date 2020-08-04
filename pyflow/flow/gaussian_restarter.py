@@ -5,17 +5,14 @@ from typing import List
 
 import numpy as np
 
-from pyflow.io.gaussian_writer import GaussianWriter
 from pyflow.io.io_utils import find_string
 
 
 class GaussianRestarter:
 
-    def __init__(self, input_file: Path, output_file: Path, unopt_pdb_file: Path, dest: Path, **kwargs):
+    def __init__(self, input_file: Path, output_file: Path, **kwargs):
         self.input_file = input_file
         self.output_file = output_file
-        self.unopt_pdb_file = unopt_pdb_file
-        self.new_input_filepath = dest / input_file.name
 
         self.route = GaussianRestarter.get_route(input_file)
         self.args = {}
@@ -123,30 +120,11 @@ class GaussianRestarter:
         new_opt_keyword = "opt=({})".format(",".join(opt_options))
         new_route = self.route.replace(opt_keyword, new_opt_keyword)
 
-        gaussian_writer = GaussianWriter(geometry_file=self.output_file,
-                                         geometry_format="log",
-                                         filepath=self.new_input_filepath,
-                                         overwrite=True,
-                                         route=new_route,
-                                         smiles_geometry_file=self.unopt_pdb_file,
-                                         smiles_geometry_format="pdb",
-                                         **self.args)
-
-        gaussian_writer.write()
+        return new_route
 
     # sets up a frequency calculation to be restarted
-    def restart_freq(self):
-
-        gaussian_writer = GaussianWriter(geometry_file=self.output_file,
-                                         geometry_format="log",
-                                         filepath=self.new_input_filepath,
-                                         overwrite=True,
-                                         route="# Restart",
-                                         no_mol_info=True,
-                                         smiles_geometry_file=self.unopt_pdb_file,
-                                         smiles_geometry_format="pdb",
-                                         **self.args)
-        gaussian_writer.write()
+    def restart_freq(self) -> str:
+        return "# Restart"
 
     # Removes the rwf files associated with the given log file
     def clear_gau_files(self):
@@ -165,29 +143,24 @@ class GaussianRestarter:
             for f in glob.glob("Gau-{}*".format(id)):
                 os.remove(f)
 
-    def update_input_file(self):
+    def get_new_route(self):
         if not self.output_file.exists():
-            return False
+            return None
 
         if self.needs_restart() and not self.error_fail():
+            self.clear_gau_files()
+
             normal_t_count = len(find_string(self.output_file, "Normal termination"))
             if "opt" in self.route and "freq" in self.route:
                 if normal_t_count == 1:
-                    self.restart_freq()
+                    return self.restart_freq()
                 elif normal_t_count == 0:
-                    self.restart_opt()
+                    return self.restart_opt()
             elif "opt" in self.route:
-                self.restart_opt()
+                return self.restart_opt()
             elif "freq" in self.route:
-                self.restart_freq()
-
-            self.clear_gau_files()
-
-            return True
+                return self.restart_freq()
 
         elif self.convergence_fail() or self.formbx_fail() or self.link_9999_fail():
-            self.restart_opt(additional_opt_options=["recalcfc=4"])
             self.clear_gau_files()
-
-            return True
-        return False
+            return self.restart_opt(additional_opt_options=["recalcfc=4"])

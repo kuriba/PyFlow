@@ -692,8 +692,22 @@ class FlowRunner:
             inchi_key = input_file.name.split("_")[0]
             unopt_pdb_file = self.get_unopt_pdb_file(inchi_key)
             print("ATTEMPTING TO RESTART", input_file)
-            restarter = GaussianRestarter(input_file, output_file, unopt_pdb_file, dest=dest)
-            return restarter.update_input_file()
+            restarter = GaussianRestarter(input_file, output_file)
+            new_route = restarter.get_new_route()
+
+            new_step_config = dict(self.current_step_config)
+            new_step_config["route"] = new_route
+
+            input_writer = GaussianWriter.from_config(step_config=new_step_config,
+                                                      filepath=dest / input_file.name,
+                                                      geometry_file=output_file,
+                                                      geometry_format="log",
+                                                      smiles_geometry_file=unopt_pdb_file,
+                                                      smiles_geometry_format="pdb",
+                                                      overwrite=True)
+            input_writer.write()
+
+
         else:
             msg = "Restarting '{}' calculations is not yet supported.".format(self.step_program)
             raise NotImplementedError(msg)
