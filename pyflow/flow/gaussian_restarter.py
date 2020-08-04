@@ -117,7 +117,10 @@ class GaussianRestarter:
         opt_options += additional_opt_options
         opt_options = self.clean_options(opt_options)
 
-        new_opt_keyword = "opt=({})".format(",".join(opt_options))
+        if len(opt_options) > 0:
+            new_opt_keyword = "opt=({})".format(",".join(opt_options))
+        else:
+            new_opt_keyword = "opt"
         new_route = self.route.replace(opt_keyword, new_opt_keyword)
 
         return new_route
