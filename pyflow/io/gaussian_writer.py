@@ -21,11 +21,11 @@ class GaussianWriter(AbstractInputFileWriter):
         coordinates = self.coordinates.split("\n", 2)[2]
 
         # link 0 commands
-        if self.args["rwf"] and self.args["chk"]:  # save rwf and chk file
+        if self.args.get("rwf", False) and self.args.get("chk", False):  # save rwf and chk file
             link0 = "%chk={}.chk\n%rwf={}.rwf\n%Save\n"
-        elif self.args["rwf"]:
+        elif self.args.get("rwf", False):
             link0 = "%chk={}.chk\n%NoSave\n%rwf={}.rwf\n"
-        elif self.args["chk"]:
+        elif self.args.get("chk", False):
             link0 = "%rwf={}.rwf\n%NoSave\n%chk={}.chk\n"
         else:
             link0 = "%chk={}.chk\n%rwf={}.rwf\n%NoSave\n"
