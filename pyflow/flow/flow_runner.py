@@ -192,7 +192,7 @@ class FlowRunner:
     def get_prev_wave_dir(self) -> Path:
         wave_dirs = [Path(d) for d in glob(str(self.current_step_dir / "wave_*_calcs"))]
         wave_ids = [int(d.name.split("_")[1]) for d in wave_dirs]
-        wave_ids.pop(self.current_wave_id)
+        wave_ids.remove(self.current_wave_id)
         prev_wave_id = max(wave_ids)
         prev_wave_dir = self.current_step_dir / "wave_{}_calcs".format(prev_wave_id)
         return prev_wave_dir
