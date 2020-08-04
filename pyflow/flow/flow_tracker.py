@@ -129,9 +129,9 @@ class FlowTracker:
         for step_id in config.get_step_ids():
             step_config = config.get_step(step_id)
 
-            step_dir = workflow_dir / step_id
-            completed_dir = step_dir / "wave_*_calcs" / "completed"
-            failed_dir = step_dir / "wave_*_calcs" / "failed"
+            step_dir = workflow_dir / step_id / "wave_*_calcs"
+            completed_dir = step_dir / "completed"
+            failed_dir = step_dir / "failed"
             output_file_ext = FlowRunner.PROGRAM_OUTFILE_EXTENSIONS[step_config["program"]]
 
             if step_config["conformers"]:
