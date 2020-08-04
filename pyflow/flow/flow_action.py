@@ -130,11 +130,23 @@ class FlowAction:
             help="the step ID to run")
 
         parser.add_argument(
+            "-w", "--wave_id",
+            type=int,
+            required=False,
+            help="the wave ID to run")
+
+        parser.add_argument(
             "--do_not_track",
             action="store_true",
             required=False,
-            help="do not track the workflow"
-        )
+            help="do not track the workflow")
+
+        parser.add_argument(
+            "--attempt_restart",
+            action="store_true",
+            required=False,
+            default=False,
+            help="specifies that this is a restart attempt")
 
         args = vars(parser.parse_args(sys.argv[2:]))
 
@@ -156,6 +168,12 @@ class FlowAction:
             help="the step ID to run")
 
         parser.add_argument(
+            "-w", "--wave_id",
+            type=int,
+            required=True,
+            help="the wave ID to run")
+
+        parser.add_argument(
             "-t", "--time",
             type=int,
             required=True,
@@ -163,7 +181,7 @@ class FlowAction:
 
         args = vars(parser.parse_args(sys.argv[2:]))
 
-        FlowRunner.run_array_calc(args["step_id"], time=args["time"])
+        FlowRunner.run_array_calc(**args)
 
     def handle(self) -> None:
         """
@@ -182,9 +200,15 @@ class FlowAction:
             required=True,
             help="the step ID to handle")
 
+        parser.add_argument(
+            "-w", "--wave_id",
+            type=int,
+            required=True,
+            help="the wave ID to run")
+
         args = vars(parser.parse_args(sys.argv[2:]))
 
-        FlowRunner.handle_array_output(args["step_id"])
+        FlowRunner.handle_array_output(**args)
 
     def progress(self) -> None:
         """

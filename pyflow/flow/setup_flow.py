@@ -36,10 +36,6 @@ def setup_dirs(save_location: str, workflow_name: str, config_file: str, config_
     for step_id in config.get_step_ids():
         step_dir = main_dir / step_id
         step_dir.mkdir()
-        sub_dirs = config.get_step_directories(step_id)
-        for sub_dir in sub_dirs:
-            sub_dir_path = step_dir / sub_dir
-            sub_dir_path.mkdir()
 
     # make directory for initial, unoptimized PDB files
     unopt_pdbs = main_dir / "unopt_pdbs"
@@ -48,7 +44,8 @@ def setup_dirs(save_location: str, workflow_name: str, config_file: str, config_
     # write config filename and config ID to .params file in workflow directory
     flow_instance_config_file = main_dir / WORKFLOW_PARAMS_FILENAME
     flow_instance_config = {"config_file": str(Path(config_file).resolve()),
-                            "config_id": str(config_id)}
+                            "config_id": str(config_id),
+                            "num_waves": 1}
 
     with flow_instance_config_file.open("w") as f:
         f.write(json.dumps(flow_instance_config, indent=4))

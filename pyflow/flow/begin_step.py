@@ -8,13 +8,15 @@ from pyflow.flow.flow_utils import load_workflow_params, WORKFLOW_PARAMS_FILENAM
 from pyflow.io.io_utils import upsearch
 
 
-def begin_step(step_id: str = None, show_progress: bool = False, do_not_track: bool = False) -> None:
+def begin_step(step_id: str = None, show_progress: bool = False, wave_id: int = 1,
+               do_not_track: bool = False, attempt_restart: bool = False) -> None:
     """
     Starts running the specified workflow step.
-
     :param step_id: the ID of the step to start running
     :param show_progress: displays command-line progress bar if True, no progress bar otherwise
+    :param wave_id:
     :param do_not_track: if True, does not track the workflow in the tracked_workflows.csv file
+    :param attempt_restart:
     :return: None
     """
 
@@ -38,7 +40,7 @@ def begin_step(step_id: str = None, show_progress: bool = False, do_not_track: b
         raise AttributeError(message)
 
     # do stuff on first step (tracking, workflow params modification)
-    if flow_config.get_initial_step_id() == step_id:
+    if flow_config.get_initial_step_id() == step_id and wave_id == 1 and not attempt_restart:
         if not do_not_track:
             try:
                 FlowTracker.track_new_flow(config_file=config_file,
@@ -55,8 +57,10 @@ def begin_step(step_id: str = None, show_progress: bool = False, do_not_track: b
 
     # setup and start running workflow
     flow_runner = FlowRunner(flow_config=flow_config,
-                             current_step_id=step_id,
-                             workflow_dir=workflow_main_dir)
+                             wave_id=wave_id,
+                             step_id=step_id,
+                             workflow_dir=workflow_main_dir,
+                             attempt_restart=attempt_restart)
 
     flow_runner.run(show_progress=show_progress)
 

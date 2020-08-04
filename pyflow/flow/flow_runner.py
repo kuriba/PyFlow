@@ -2,6 +2,7 @@ import json
 import os
 import shutil
 import subprocess
+import sys
 from collections import OrderedDict
 from datetime import datetime
 from getpass import getuser
@@ -15,7 +16,8 @@ from tqdm import tqdm
 
 from pyflow.flow.commands import Commands
 from pyflow.flow.flow_config import FlowConfig
-from pyflow.flow.flow_utils import get_num_conformers, load_workflow_params, WORKFLOW_PARAMS_FILENAME
+from pyflow.flow.flow_utils import get_num_conformers, load_workflow_params, WORKFLOW_PARAMS_FILENAME, \
+    update_workflow_params
 from pyflow.io.gamess_writer import GamessWriter
 from pyflow.io.gaussian_writer import GaussianWriter
 from pyflow.io.io_utils import upsearch, find_string
@@ -23,6 +25,7 @@ from pyflow.io.sbatch_writer import SbatchWriter
 from pyflow.mol.mol_utils import get_energy
 
 
+# noinspection PyTypeChecker
 class FlowRunner:
     """
     Class which handles running workflow steps.
@@ -49,7 +52,9 @@ class FlowRunner:
     SAVE_OUTPUT_LOCATION = Path("/work/lopez/workflows")
 
     def __init__(self,
-                 current_step_id: str,
+                 step_id: str,
+                 wave_id: int,
+                 attempt_restart: bool = False,
                  flow_config: FlowConfig = None,
                  workflow_dir: Path = None):
         """
@@ -57,7 +62,7 @@ class FlowRunner:
         workflow steps. This involves setting up input files and submissions scripts
         and submitting them to the Slurm queue.
 
-        :param current_step_id: the ID of the current workflow step
+        :param step_id: the ID of the current workflow step
         :param flow_config: a workflow configuration object
         :param workflow_dir: the main directory of the workflow
         """
@@ -75,10 +80,13 @@ class FlowRunner:
         else:
             self.workflow_dir = workflow_dir
 
-        self.current_step_id = current_step_id
-        self.current_step_config = self.flow_config.get_step(current_step_id)
+        self.attempt_restart = attempt_restart
+        self.current_step_id = step_id
+        self.current_wave_id = wave_id
+        self.current_step_config = self.flow_config.get_step(step_id)
         self.current_step_dir = self.workflow_dir / self.current_step_id
-        self.step_program = self.flow_config.get_step(current_step_id)["program"]
+        self.current_wave_dir = self.current_step_dir / "wave_{}_calcs".format(wave_id)
+        self.step_program = self.flow_config.get_step(step_id)["program"]
 
     def run(self, show_progress: bool = False, overwrite: bool = True) -> None:
         """
@@ -89,6 +97,14 @@ class FlowRunner:
         :param overwrite: will overwrite existing input files if True
         :return: None
         """
+        if self.attempt_restart and not self.needs_restart():
+            print("No jobs to restart for wave {} of step '{}'.".format(self.current_wave_id, self.current_step_id))
+            sys.exit(0)
+        elif self.attempt_restart and self.needs_restart():
+            self.current_wave_id = self.get_next_wave_id()
+            self.current_wave_dir = self.current_step_dir / "wave_{}_calcs".format(self.current_wave_id)
+
+        self.setup_wave_dir()
         self.setup_input_files(show_progress, overwrite)
 
         num_input_files = self._create_job_list_file()
@@ -96,7 +112,7 @@ class FlowRunner:
         sbatch_file = self.setup_sbatch_file(array_size=num_input_files)
 
         job_id = sbatch_file.submit()
-        print("Submitted step '{}' with job ID {}".format(self.current_step_id, job_id))
+        print("Submitted step '{}' with job ID {} (wave {})".format(self.current_step_id, job_id, self.current_wave_id))
 
         self.queue_dependents(job_id)
 
@@ -107,6 +123,19 @@ class FlowRunner:
         :return: True if the current step is the first, False otherwise
         """
         return self.current_step_id == self.flow_config.get_initial_step_id()
+
+    def needs_restart(self) -> bool:
+        outfile_ext = FlowRunner.PROGRAM_OUTFILE_EXTENSIONS[self.step_program]
+        num_failed_jobs = len(glob(self.current_wave_dir / "failed" / "*.{}".format(outfile_ext)))
+        return num_failed_jobs > 0
+
+    def setup_wave_dir(self) -> None:
+        self.current_wave_dir.mkdir()
+
+        sub_dirs = self.flow_config.get_step_directories(self.current_step_id)
+        for d in sub_dirs:
+            sub_dir_path = self.current_wave_dir / d
+            sub_dir_path.mkdir()
 
     def get_prev_step_id(self) -> str:
         """
@@ -124,30 +153,50 @@ class FlowRunner:
         ``completed`` folder of the preceding step.
         :return: a list of paths to the source structures
         """
-        if self.is_first_step():
+        if self.is_first_step() and not self.attempt_restart:
             source_structures_path = self.workflow_dir / "unopt_pdbs"
             source_file_extension = "pdb"
 
-            pattern = "*.{}".format(source_file_extension)
-            structure_files = list(source_structures_path.glob(pattern))
-        else:
+            file_pattern = "*.{}".format(source_file_extension)
+        elif not self.attempt_restart:
             # determine the previous step
             prev_step_id = self.get_prev_step_id()
             prev_program = self.flow_config.get_step(prev_step_id)["program"]
 
-            source_structures_path = self.workflow_dir / prev_step_id / "completed"
+            source_structures_path = self.get_prev_step_wave_dir() / "completed"
+
             source_file_extension = FlowRunner.PROGRAM_OUTFILE_EXTENSIONS[prev_program]
 
-            structure_files = source_structures_path.glob("*_{}*.{}".format(prev_step_id, source_file_extension))
+            file_pattern = "*_{}*.{}".format(prev_step_id, source_file_extension)
+        else:
+            source_structures_path = self.get_prev_wave_dir() / "failed"
 
-            structure_files = self.filter_conformers(list(structure_files))
+            source_file_extension = FlowRunner.PROGRAM_OUTFILE_EXTENSIONS[self.step_program]
+
+            file_pattern = "*_{}*.{}".format(self.current_step_id, source_file_extension)
+
+        structure_files = source_structures_path.glob(file_pattern)
+
+        structure_files = self.filter_conformers(list(structure_files))
 
         return structure_files
 
-    def get_input_files(self, structure_files: List[Path], structure_dest: Path) -> List[Tuple[Path, Path]]:
+    def get_prev_step_wave_dir(self) -> Path:
+        prev_step_id = self.get_prev_step_id()
+        return self.workflow_dir / prev_step_id / "wave_{}_calcs".format(self.current_wave_id)
+
+    def get_prev_wave_dir(self) -> Path:
+        wave_dirs = [Path(d) for d in glob(self.current_step_dir / "wave_*_calcs")]
+        wave_ids = [int(d.name.split("_")[1]) for d in wave_dirs]
+        wave_ids.pop(self.current_wave_id)
+        prev_wave_id = max(wave_ids)
+        prev_wave_dir = self.current_step_dir / "wave_{}_calcs".format(prev_wave_id)
+        return prev_wave_dir
+
+    def get_input_filenames(self, structure_files: List[Path], structure_dest: Path) -> List[Tuple[Path, Path]]:
         """
         Returns a list of 2-tuples where the first element is a Path object to
-        an input file for the next step in the workflow, and the  second element
+        an input file for the next step in the workflow, and the second element
         is a Path object to the corresponding output file from the previous step.
 
         :param structure_files: a list of output files from the previous step
@@ -187,37 +236,72 @@ class FlowRunner:
         :return: None
         """
         structure_files = self.get_source_structures()
+        structure_dest = self.current_wave_dir
 
-        if self.is_first_step():
-            source_structure_format = "pdb"
+        if not self.attempt_restart:
+            if self.is_first_step():
+                source_structure_format = "pdb"
+            else:
+                prev_step_id = self.flow_config.get_previous_step_id(self.current_step_id)
+                prev_program = self.flow_config.get_step(prev_step_id)["program"]
+                source_structure_format = FlowRunner.PROGRAM_OPENBABEL_OUT_FORMATS[prev_program]
+
+            input_writer = FlowRunner.PROGRAM_INPUT_WRITER[self.step_program]
+
+            input_filenames = self.get_input_filenames(structure_files, structure_dest)
+
+            if show_progress:
+                desc = "Setting up {} input files".format(self.current_step_id)
+                input_filenames = tqdm(input_filenames, desc=desc)
+
+            for f in input_filenames:
+                input_filename = f[0]
+                source_geometry = f[1]
+                inchi_key = input_filename.stem.split("_")[0]
+                unopt_pdb_file = self.get_unopt_pdb_file(inchi_key)
+                input_writer = input_writer.from_config(step_config=self.current_step_config,
+                                                        filepath=input_filename,
+                                                        geometry_file=source_geometry,
+                                                        geometry_format=source_structure_format,
+                                                        smiles_geometry_file=unopt_pdb_file,
+                                                        smiles_geometry_format="pdb",
+                                                        overwrite=overwrite)
+                input_writer.write()
         else:
-            prev_step_id = self.flow_config.get_previous_step_id(self.current_step_id)
-            prev_program = self.flow_config.get_step(prev_step_id)["program"]
-            source_structure_format = FlowRunner.PROGRAM_OPENBABEL_OUT_FORMATS[prev_program]
+            failed_input_files = self.get_prev_wave_failed_input_files()
 
-        input_writer = FlowRunner.PROGRAM_INPUT_WRITER[self.step_program]
+            output_file_ext = FlowRunner.PROGRAM_OUTFILE_EXTENSIONS[self.step_program]
 
-        structure_dest = self.current_step_dir
+            failed_files = []
+            for input_file in failed_input_files:
+                output_file = input_file.with_suffix(".{}".format(output_file_ext))
+                failed_files.append((input_file, output_file))
 
-        input_files = self.get_input_files(structure_files, structure_dest)
+            for files in failed_files:
+                input_file = files[0]
+                output_file = files[1]
+                if self.update_input_file(input_file, output_file, structure_dest):
+                    input_file.unlink()
+                    output_file.unlink()
 
-        if show_progress:
-            desc = "Setting up {} input files".format(self.current_step_id)
-            input_files = tqdm(input_files, desc=desc)
+    def get_prev_wave_failed_input_files(self) -> List[Path]:
+        input_files_source = self.get_prev_wave_dir() / "failed"
+        input_file_ext = FlowRunner.PROGRAM_INFILE_EXTENSIONS[self.step_program]
 
-        for f in input_files:
-            input_filename = f[0]
-            source_geometry = f[1]
-            inchi_key = input_filename.stem.split("_")[0]
-            unopt_pdb_file = self.get_unopt_pdb_file(inchi_key)
-            input_writer = input_writer.from_config(step_config=self.current_step_config,
-                                                    filepath=input_filename,
-                                                    geometry_file=source_geometry,
-                                                    geometry_format=source_structure_format,
-                                                    smiles_geometry_file=unopt_pdb_file,
-                                                    smiles_geometry_format="pdb",
-                                                    overwrite=overwrite)
-            input_writer.write()
+        file_pattern = "*_{}*.{}".format(self.current_step_id, input_file_ext)
+
+        input_files = [Path(f) for f in input_files_source.glob(file_pattern)]
+
+        return input_files
+
+    def get_next_wave_id(self) -> int:
+        params = load_workflow_params()
+        next_wave_id = params["num_waves"] + 1
+        self.update_num_waves(next_wave_id)
+        return next_wave_id
+
+    def update_num_waves(self, num_waves: int) -> None:
+        update_workflow_params(num_waves=num_waves)
 
     def get_unopt_pdb_file(self, inchi_key: str):
         return self.workflow_dir / "unopt_pdbs" / "{}_0.pdb".format(inchi_key)
@@ -327,18 +411,18 @@ class FlowRunner:
 
         return lowest_energy_source_files
 
-    def setup_sbatch_file(self, array_size) -> SbatchWriter:
+    def setup_sbatch_file(self, array_size: int) -> SbatchWriter:
         """
         Creates an array sbatch file for the current workflow step.
 
         :return: an SbatchWriter object
         """
-        sbatch_filename = "{}.sbatch".format(self.current_step_id)
-        sbatch_filepath = self.current_step_dir / sbatch_filename
+        sbatch_filename = "{}_wave_{}.sbatch".format(self.current_step_id, self.current_wave_id)
+        sbatch_filepath = self.current_wave_dir / sbatch_filename
 
         sbatch_commands = self.get_array_commands()
 
-        jobname = "{}_{}".format(self.workflow_dir.name, self.current_step_id)
+        jobname = "{}_{}_wave-{}".format(self.workflow_dir.name, self.current_step_id, self.current_wave_id)
 
         sbatch_writer = SbatchWriter.from_config(step_config=self.current_step_config,
                                                  filepath=sbatch_filepath,
@@ -361,9 +445,11 @@ class FlowRunner:
 
         :return: a string of commands for run
         """
-        run_command = Commands.get_run_command(self.current_step_id,
-                                               self.current_step_config["time"])
-        job_handling = Commands.get_handle_command(self.current_step_id)
+        run_command = Commands.get_run_command(step_id=self.current_step_id,
+                                               wave_id=self.current_wave_id,
+                                               time=self.current_step_config["time"])
+        job_handling = Commands.get_handle_command(step_id=self.current_step_id,
+                                                   wave_id=self.current_wave_id)
         commands = [run_command, job_handling]
 
         command_string = "\n".join(commands)
@@ -379,13 +465,13 @@ class FlowRunner:
         :return: the number of jobs in the array
         """
         input_file_extension = FlowRunner.PROGRAM_INFILE_EXTENSIONS[self.step_program]
-        input_files = self.current_step_dir.glob("*.{}".format(input_file_extension))
+        input_files = self.current_wave_dir.glob("*.{}".format(input_file_extension))
         input_files = [f.name for f in input_files]
         input_files.sort()
         input_files_string = "\n".join(input_files)
         input_files_string += "\n"
 
-        job_list_file = self.current_step_dir / "input_files.txt"
+        job_list_file = self.current_wave_dir / "input_files.txt"
 
         job_list_file.write_text(input_files_string)
 
@@ -401,13 +487,38 @@ class FlowRunner:
         """
         dependents = self.flow_config.get_dependents(self.current_step_id)
         for dependent_id in dependents:
-            sbatch_filename = "{}_submitter.sbatch".format(dependent_id)
+            sbatch_filename = "{}_wave_{}_submitter.sbatch".format(dependent_id, self.current_wave_id)
 
             sbatch_filepath = self.workflow_dir / dependent_id / sbatch_filename
 
-            sbatch_commands = Commands.get_begin_step_command(dependent_id)
+            sbatch_commands = Commands.get_begin_step_command(step_id=dependent_id,
+                                                              wave_id=self.current_wave_id)
 
-            jobname = "{}_{}_submitter".format(self.workflow_dir.name, dependent_id)
+            jobname = "{}_{}_wave-{}_submitter".format(self.workflow_dir.name, dependent_id, self.current_wave_id)
+
+            sbatch_writer = SbatchWriter(jobname=jobname,
+                                         commands=sbatch_commands,
+                                         filepath=sbatch_filepath,
+                                         output="/dev/null",
+                                         error="/dev/null",
+                                         dependency_id=job_id,
+                                         dependency_type="afterany",
+                                         overwrite=True)
+            sbatch_writer.write()
+            sbatch_writer.submit()
+
+        # restart queueing
+        if self.current_step_config["attempt_restart"]:
+            sbatch_filename = "{}_wave_{}_restarter.sbatch".format(self.current_step_id, self.current_wave_id)
+
+            sbatch_filepath = self.current_step_dir / sbatch_filename
+
+            sbatch_commands = Commands.get_begin_step_command(step_id=self.current_step_id,
+                                                              wave_id=self.current_wave_id,
+                                                              attempt_restart=True)
+
+            jobname = "{}_{}_wave-{}_restarter".format(self.workflow_dir.name, self.current_step_id,
+                                                       self.current_wave_id)
 
             sbatch_writer = SbatchWriter(jobname=jobname,
                                          commands=sbatch_commands,
@@ -443,7 +554,7 @@ class FlowRunner:
         print(json.dumps({"SLURM_REPORT": info}, indent=4))
 
     @staticmethod
-    def run_array_calc(step_id: str, time: int = None) -> None:
+    def run_array_calc(step_id: str, wave_id: int, time: int = None) -> None:
         """
         Static method for running a calculation as part of an array. This method
         should only be called from within a Slurm array submission script as it
@@ -451,11 +562,12 @@ class FlowRunner:
         which array calculation to run.
 
         :param step_id: the step ID to run
+        :param wave_id:
         :param time: time limit in minutes
         :return: None
         """
         FlowRunner.print_slurm_report()
-        flow_runner = FlowRunner(current_step_id=step_id)
+        flow_runner = FlowRunner(step_id=step_id, wave_id=wave_id)
         input_file = flow_runner.get_input_file()
         flow_runner.run_quantum_chem(input_file, time)
 
@@ -467,7 +579,7 @@ class FlowRunner:
         :return: a Path object pointing to the input file
         """
         task_id = int(os.environ["SLURM_ARRAY_TASK_ID"])
-        job_list_file = str(self.current_step_dir / "input_files.txt")
+        job_list_file = str(self.current_wave_dir / "input_files.txt")
         input_file = Path(getline(job_list_file, task_id).strip()).resolve()
         return input_file
 
@@ -496,7 +608,6 @@ class FlowRunner:
         """
         Updates the current environment (``os.environ``) by adding additional,
         program-specific environment variables.
-
         :return: a dict of environment variables
         """
         env = os.environ.copy()
@@ -525,13 +636,14 @@ class FlowRunner:
             raise AttributeError("Unknown program: {}".format(self.step_program))
 
     @staticmethod
-    def handle_array_output(step_id: str) -> None:
+    def handle_array_output(step_id: str, wave_id: int) -> None:
         """
 
         :param step_id:
+        :param wave_id:
         :return:
         """
-        flow_runner = FlowRunner(current_step_id=step_id)
+        flow_runner = FlowRunner(step_id=step_id, wave_id=wave_id)
         input_file = flow_runner.get_input_file()
 
         in_file_ext = FlowRunner.PROGRAM_INFILE_EXTENSIONS[flow_runner.step_program]
@@ -543,7 +655,7 @@ class FlowRunner:
         FlowRunner._rename_array_files(output_file.stem)
 
         if flow_runner.is_complete(output_file):
-            completed_dest = flow_runner.current_step_dir / "completed"
+            completed_dest = flow_runner.current_wave_dir / "completed"
 
             if flow_runner.current_step_config["save_output"]:
                 flow_runner.save_output(output_file)
@@ -553,15 +665,8 @@ class FlowRunner:
                 shutil.move(f, str(completed_dest))
 
             flow_runner._clear_scratch_files(input_file.stem)
-
-        elif flow_runner.current_step_config["attempt_restart"]:
-            pass
-            try:
-                flow_runner.update_input_file(input_file, output_file)
-            except NotImplementedError:
-                pass
         else:
-            failed_dest = flow_runner.current_step_dir / "failed"
+            failed_dest = flow_runner.current_wave_dir / "failed"
 
             # move completed input/output files
             for f in glob("{}*".format(output_file.with_suffix(""))):
@@ -574,13 +679,13 @@ class FlowRunner:
             for f in scratch_files:
                 f.unlink()
 
-    def update_input_file(self, input_file: Path, output_file: Path):
+    def update_input_file(self, input_file: Path, output_file: Path, dest: Path) -> bool:
         if self.step_program == "gaussian16":
             from pyflow.flow.gaussian_restarter import GaussianRestarter
             inchi_key = input_file.name.split("_")[0]
             unopt_pdb_file = self.get_unopt_pdb_file(inchi_key)
-            restarter = GaussianRestarter(input_file, output_file, unopt_pdb_file)
-            restarter.update_input_file()
+            restarter = GaussianRestarter(input_file, output_file, unopt_pdb_file, dest=dest)
+            return restarter.update_input_file()
         else:
             msg = "Restarting '{}' calculations is not yet supported.".format(self.step_program)
             raise NotImplementedError(msg)
