@@ -138,6 +138,8 @@ class GaussianRestarter:
 
                 if p_id is not None and inp_id is not None:
                     break
+        print("PID:", p_id)
+        print("INP_ID:", inp_id)
 
         for id in [p_id, inp_id]:
             for f in glob.glob("Gau-{}*".format(id)):
