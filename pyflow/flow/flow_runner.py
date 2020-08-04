@@ -181,7 +181,8 @@ class FlowRunner:
 
         structure_files = source_structures_path.glob(file_pattern)
 
-        structure_files = self.filter_conformers(list(structure_files))
+        if not self.is_first_step():
+            structure_files = self.filter_conformers(list(structure_files))
 
         return structure_files
 
