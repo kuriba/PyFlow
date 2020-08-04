@@ -127,7 +127,8 @@ class FlowRunner:
     def needs_restart(self) -> bool:
         if self.attempt_restart:
             outfile_ext = FlowRunner.PROGRAM_OUTFILE_EXTENSIONS[self.step_program]
-            num_failed_jobs = len(glob(self.current_wave_dir / "failed" / "*.{}".format(outfile_ext)))
+            search_pattern = str(self.current_wave_dir / "failed" / "*.{}".format(outfile_ext))
+            num_failed_jobs = len(glob(search_pattern))
             return num_failed_jobs > 0
         return False
 
