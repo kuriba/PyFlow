@@ -166,7 +166,11 @@ class GaussianRestarter:
                 os.remove(f)
 
     def update_input_file(self):
+        print("INPUT_FILE:", self.input_file)
+        print("OUTPUT_FILE:", self.output_file)
+
         if not self.output_file.exists():
+            print("OUTPUT FILE NOT EXISTS")
             return False
 
         if self.needs_restart() and not self.error_fail():
