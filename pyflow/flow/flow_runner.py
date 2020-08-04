@@ -695,18 +695,20 @@ class FlowRunner:
             restarter = GaussianRestarter(input_file, output_file)
             new_route = restarter.get_new_route()
 
-            new_step_config = dict(self.current_step_config)
-            new_step_config["route"] = new_route
+            if new_route is not None:
+                new_step_config = dict(self.current_step_config)
+                new_step_config["route"] = new_route
 
-            input_writer = GaussianWriter.from_config(step_config=new_step_config,
-                                                      filepath=dest / input_file.name,
-                                                      geometry_file=output_file,
-                                                      geometry_format="log",
-                                                      smiles_geometry_file=unopt_pdb_file,
-                                                      smiles_geometry_format="pdb",
-                                                      overwrite=True)
-            input_writer.write()
-
+                input_writer = GaussianWriter.from_config(step_config=new_step_config,
+                                                          filepath=dest / input_file.name,
+                                                          geometry_file=output_file,
+                                                          geometry_format="log",
+                                                          smiles_geometry_file=unopt_pdb_file,
+                                                          smiles_geometry_format="pdb",
+                                                          overwrite=True)
+                input_writer.write()
+                return True
+            return False
 
         else:
             msg = "Restarting '{}' calculations is not yet supported.".format(self.step_program)
