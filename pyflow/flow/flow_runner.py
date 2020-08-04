@@ -684,9 +684,11 @@ class FlowRunner:
 
     def update_input_file(self, input_file: Path, output_file: Path, dest: Path) -> bool:
         if self.step_program == "gaussian16":
+
             from pyflow.flow.gaussian_restarter import GaussianRestarter
             inchi_key = input_file.name.split("_")[0]
             unopt_pdb_file = self.get_unopt_pdb_file(inchi_key)
+            print("ATTEMPTING TO RESTART", input_file)
             restarter = GaussianRestarter(input_file, output_file, unopt_pdb_file, dest=dest)
             return restarter.update_input_file()
         else:
