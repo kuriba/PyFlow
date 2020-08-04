@@ -633,7 +633,11 @@ class FlowRunner:
             elif self.current_step_config["single_point"]:
                 return num_matches == 1
         elif self.step_program == "gamess":
-            num_matches = find_string(output_filepath, "TERMINATED NORMALLY")
+            num_matches = find_string(output_filepath, "GAMESS TERMINATED NORMALLY")
+            print("CHECKING COMPLETION STATUS:", output_file)
+            print("NUM_MATCHES:", num_matches)
+            print("DESIRED MATCHES:", sum([self.current_step_config["opt"]]))
+            print("CURRENT STEP OPT VAL:", self.current_step_config["opt"])
             return num_matches == sum([self.current_step_config["opt"]])
         else:
             raise AttributeError("Unknown program: {}".format(self.step_program))
