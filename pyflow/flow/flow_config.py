@@ -130,8 +130,7 @@ class FlowConfig:
     REQUIRED_STEP_DIRS = {"all":
                               {"opt": ["completed", "failed"],
                                "single_point": ["completed", "failed"]},
-                          "gaussian16": {"attempt_restart": ["resubmits"],
-                                         "freq": ["completed", "failed"]}}
+                          "gaussian16": {"freq": ["completed", "failed"]}}
 
     # dict of supported general configuration parameters and their expected types
     SUPPORTED_GENERAL_PARAMS = {"initial_step": str,
