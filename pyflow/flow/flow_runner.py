@@ -292,11 +292,14 @@ class FlowRunner:
 
     def get_prev_wave_failed_input_files(self) -> List[Path]:
         input_files_source = self.get_prev_wave_dir() / "failed"
+        print("INPUT FILES SOURCE:", input_files_source)
+
         input_file_ext = FlowRunner.PROGRAM_INFILE_EXTENSIONS[self.step_program]
 
         file_pattern = "*_{}*.{}".format(self.current_step_id, input_file_ext)
 
         input_files = [Path(f) for f in input_files_source.glob(file_pattern)]
+        print("INPUT_FILES:", input_files)
 
         return input_files
 
