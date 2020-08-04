@@ -78,6 +78,17 @@ def load_workflow_params() -> dict:
     return workflow_params
 
 
+def update_workflow_params(**kwargs) -> None:
+    workflow_params_file = upsearch(WORKFLOW_PARAMS_FILENAME)
+    workflow_params = load_workflow_params()
+    for k, v in kwargs.items():
+        if k in workflow_params:
+            workflow_params[k] = v
+
+    with workflow_params_file.open("w") as f:
+        f.write(json.dumps(workflow_params, indent=4))
+
+
 def get_path_to_pyflow() -> Path:
     """
     Returns a ``Path`` object which points to the ``PYFLOW`` environment variable.
@@ -110,6 +121,7 @@ def get_num_conformers(inchi_key: str) -> int:
     num_conformers = len(glob(str(unopt_pdbs)))
 
     return num_conformers
+
 
 def copy_to_long_term_storage() -> None:
     pass  # TODO implement copy_to_long_term_storage
