@@ -88,8 +88,6 @@ class FlowRunner:
         self.current_wave_dir = self.current_step_dir / "wave_{}_calcs".format(wave_id)
         self.step_program = self.flow_config.get_step(step_id)["program"]
 
-        print("WAVEID:", wave_id)
-
     def run(self, show_progress: bool = False, overwrite: bool = True) -> None:
         """
         Sets up the current workflow step by creating input files and submission scripts,
