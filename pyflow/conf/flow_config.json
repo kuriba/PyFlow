@@ -19,7 +19,7 @@
         "partition": "short",
         "email": false,
         "simul_jobs": 50,
-        "save_output": true,
+        "save_output": false,
         "dependents": [
           "rm1-d"
         ]
