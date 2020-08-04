@@ -273,7 +273,6 @@ class FlowRunner:
                 input_writer.write()
         else:
             failed_input_files = self.get_prev_wave_failed_input_files()
-            print("PREV WAVE FAILED INPUTS:", failed_input_files)
 
             output_file_ext = FlowRunner.PROGRAM_OUTFILE_EXTENSIONS[self.step_program]
 
@@ -281,10 +280,8 @@ class FlowRunner:
             for input_file in failed_input_files:
                 output_file = input_file.with_suffix(".{}".format(output_file_ext))
                 failed_files.append((input_file, output_file))
-            print("FAILED FILES:", failed_files)
 
             for files in failed_files:
-                print("FILES:", files)
                 input_file = files[0]
                 output_file = files[1]
                 if self.update_input_file(input_file, output_file, structure_dest):
@@ -293,14 +290,12 @@ class FlowRunner:
 
     def get_prev_wave_failed_input_files(self) -> List[Path]:
         input_files_source = self.get_prev_wave_dir() / "failed"
-        print("INPUT FILES SOURCE:", input_files_source)
 
         input_file_ext = FlowRunner.PROGRAM_INFILE_EXTENSIONS[self.step_program]
 
         file_pattern = "*_{}*.{}".format(self.current_step_id, input_file_ext)
 
         input_files = [Path(f) for f in input_files_source.glob(file_pattern)]
-        print("INPUT_FILES:", input_files)
 
         return input_files
 
