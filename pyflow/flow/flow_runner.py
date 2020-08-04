@@ -725,9 +725,6 @@ class FlowRunner:
             f = Path("{}_{}.{}".format(array_id, task_id, ext))
             f.rename("{}.{}".format(name, ext))
 
-    def restart_failed_calc(self):
-        pass  # TODO implement restart for failed calcs
-
     def save_output(self, output_file: Path) -> None:
         """
         Creates a copy of the given output file in /work/lopez/workflows
@@ -738,7 +735,6 @@ class FlowRunner:
         workflow_params = load_workflow_params()
         config_file = Path(workflow_params["config_file"])
         config_id = workflow_params["config_id"]
-        dest = self.SAVE_OUTPUT_LOCATION / config_file.stem / config_id / self.workflow_dir
+        dest = FlowRunner.SAVE_OUTPUT_LOCATION / config_file.stem / config_id / self.workflow_dir
         os.makedirs(dest, exist_ok=True)
-        print(dest)
         shutil.copy(str(output_file), str(dest / output_file.name))
