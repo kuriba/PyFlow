@@ -285,9 +285,8 @@ class FlowRunner:
                 input_file = files[0]
                 output_file = files[1]
                 if self.update_input_file(input_file, output_file, structure_dest):
-                    pass  # TODO uncomment
-                    # input_file.unlink()
-                    # output_file.unlink()
+                    input_file.unlink()
+                    output_file.unlink()
 
     def get_prev_wave_failed_input_files(self) -> List[Path]:
         input_files_source = self.get_prev_wave_dir() / "failed"
