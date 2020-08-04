@@ -88,6 +88,8 @@ class FlowRunner:
         self.current_wave_dir = self.current_step_dir / "wave_{}_calcs".format(wave_id)
         self.step_program = self.flow_config.get_step(step_id)["program"]
 
+        print("WAVEID:", wave_id)
+
     def run(self, show_progress: bool = False, overwrite: bool = True) -> None:
         """
         Sets up the current workflow step by creating input files and submission scripts,
@@ -97,12 +99,12 @@ class FlowRunner:
         :param overwrite: will overwrite existing input files if True
         :return: None
         """
-        if self.attempt_restart and not self.needs_restart():
-            print("No jobs to restart for wave {} of step '{}'.".format(self.current_wave_id, self.current_step_id))
-            sys.exit(0)
-        elif self.attempt_restart and self.needs_restart():
+        if self.needs_restart():
             self.current_wave_id = self.get_next_wave_id()
             self.current_wave_dir = self.current_step_dir / "wave_{}_calcs".format(self.current_wave_id)
+        elif self.attempt_restart:
+            print("No jobs to restart for wave {} of step '{}'.".format(self.current_wave_id, self.current_step_id))
+            sys.exit(0)
 
         self.setup_wave_dir()
         self.setup_input_files(show_progress, overwrite)
@@ -125,9 +127,11 @@ class FlowRunner:
         return self.current_step_id == self.flow_config.get_initial_step_id()
 
     def needs_restart(self) -> bool:
-        outfile_ext = FlowRunner.PROGRAM_OUTFILE_EXTENSIONS[self.step_program]
-        num_failed_jobs = len(glob(self.current_wave_dir / "failed" / "*.{}".format(outfile_ext)))
-        return num_failed_jobs > 0
+        if self.attempt_restart:
+            outfile_ext = FlowRunner.PROGRAM_OUTFILE_EXTENSIONS[self.step_program]
+            num_failed_jobs = len(glob(self.current_wave_dir / "failed" / "*.{}".format(outfile_ext)))
+            return num_failed_jobs > 0
+        return False
 
     def setup_wave_dir(self) -> None:
         self.current_wave_dir.mkdir()
