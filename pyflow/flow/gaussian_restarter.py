@@ -67,10 +67,10 @@ class GaussianRestarter:
     def needs_restart(self):
         normal_t_count = len(find_string(self.output_file, "Normal termination"))
         if "opt" in self.route and "freq" in self.route:
-            return normal_t_count == 2
+            return normal_t_count < 2
         elif "opt" in self.route or "freq" in self.route or "# Restart" in self.route:
-            return normal_t_count == 1
-        return True
+            return normal_t_count < 1
+        return False
 
     # determines if the given job encountered an error fail
     def error_fail(self):
