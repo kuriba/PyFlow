@@ -679,8 +679,12 @@ class FlowRunner:
 
     def _clear_scratch_files(self, filename: str):
         if self.step_program == "gamess":
-            gamess_scr = Path(os.environ["USERSCR"]).resolve()
-            scratch_files = [Path(f) for f in glob(gamess_scr / "{}*.*".format(filename))]
+            try:
+                scratch_dir = Path(os.environ["SCRATCH"]).resolve()
+            except ValueError:
+                return None
+            gamess_scr = scratch_dir / "scr"
+            scratch_files = [Path(f) for f in glob(str(gamess_scr / "{}*.*".format(filename)))]
             for f in scratch_files:
                 f.unlink()
 
