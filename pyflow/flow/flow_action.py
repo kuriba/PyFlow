@@ -133,6 +133,7 @@ class FlowAction:
             "-w", "--wave_id",
             type=int,
             required=False,
+            default=1,
             help="the wave ID to run")
 
         parser.add_argument(
