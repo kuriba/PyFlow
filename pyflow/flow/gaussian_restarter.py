@@ -166,15 +166,10 @@ class GaussianRestarter:
                 os.remove(f)
 
     def update_input_file(self):
-        print("INPUT_FILE:", self.input_file)
-        print("OUTPUT_FILE:", self.output_file)
-
         if not self.output_file.exists():
-            print("OUTPUT FILE NOT EXISTS")
             return False
 
         if self.needs_restart() and not self.error_fail():
-            print("BLOCK1")
             normal_t_count = len(find_string(self.output_file, "Normal termination"))
             if "opt" in self.route and "freq" in self.route:
                 if normal_t_count == 1:
@@ -191,7 +186,6 @@ class GaussianRestarter:
             return True
 
         elif self.convergence_fail() or self.formbx_fail() or self.link_9999_fail():
-            print("BLOCK2")
             self.restart_opt(additional_opt_options=["recalcfc=4"])
             self.clear_gau_files()
 
