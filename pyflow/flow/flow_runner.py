@@ -25,7 +25,6 @@ from pyflow.io.sbatch_writer import SbatchWriter
 from pyflow.mol.mol_utils import get_energy
 
 
-# noinspection PyTypeChecker
 class FlowRunner:
     """
     Class which handles running workflow steps.
@@ -63,6 +62,8 @@ class FlowRunner:
         and submitting them to the Slurm queue.
 
         :param step_id: the ID of the current workflow step
+        :param wave_id: the current wave ID
+        :param attempt_restart: if True, the specified step and wave ID will attempt to be restarted
         :param flow_config: a workflow configuration object
         :param workflow_dir: the main directory of the workflow
         """
@@ -92,9 +93,8 @@ class FlowRunner:
         """
         Sets up the current workflow step by creating input files and submission scripts,
         and submits array for calculation.
-
-        :param show_progress: displays progress bars in CLI if True
-        :param overwrite: will overwrite existing input files if True
+        :param show_progress: if True, displays progress bars in CLI
+        :param overwrite: if True, will overwrite existing input files
         :return: None
         """
         if self.needs_restart():
@@ -125,6 +125,11 @@ class FlowRunner:
         return self.current_step_id == self.flow_config.get_initial_step_id()
 
     def needs_restart(self) -> bool:
+        """
+        Determines if the current step and wave needs to be restarted by checking
+        to see if there are any failed jobs in the wave's calculation directory.
+        :return: True if a restart is required, False otherwise
+        """
         if self.attempt_restart:
             outfile_ext = FlowRunner.PROGRAM_OUTFILE_EXTENSIONS[self.step_program]
             search_pattern = str(self.current_wave_dir / "failed" / "*.{}".format(outfile_ext))
@@ -133,6 +138,11 @@ class FlowRunner:
         return False
 
     def setup_wave_dir(self) -> None:
+        """
+        Creates the current wave's calculation directory, including the
+        completion/failure subdirectories.
+        :return: None
+        """
         self.current_wave_dir.mkdir()
 
         sub_dirs = self.flow_config.get_step_directories(self.current_step_id)
@@ -154,7 +164,9 @@ class FlowRunner:
         step in the workflow, the source structures are found in the ``unopt_pdbs``
         folder of the workflow. Otherwise, the source structures are found in the
         ``completed`` folder of the preceding step.
-        :return: a list of paths to the source structures
+        If ``self.attempt_restart`` is True, the structures are taken from the failed
+        folder of the previous wave in the current step.
+        :return: a list of Path objects to the source structures
         """
         if self.is_first_step() and not self.attempt_restart:
             source_structures_path = self.workflow_dir / "unopt_pdbs"
@@ -186,10 +198,18 @@ class FlowRunner:
         return structure_files
 
     def get_prev_step_wave_dir(self) -> Path:
+        """
+        Gets the corresponding wave directory from the previous step.
+        :return: a Path object to the previous step's corresponding wave folder
+        """
         prev_step_id = self.get_prev_step_id()
         return self.workflow_dir / prev_step_id / "wave_{}_calcs".format(self.current_wave_id)
 
     def get_prev_wave_dir(self) -> Path:
+        """
+        Gets the last run wave directory for the current step.
+        :return: a Path object to the last wave directory that ran in the current step
+        """
         wave_dirs = [Path(d) for d in glob(str(self.current_step_dir / "wave_*_calcs"))]
         wave_ids = [int(d.name.split("_")[1]) for d in wave_dirs]
         wave_ids.remove(self.current_wave_id)
@@ -202,7 +222,6 @@ class FlowRunner:
         Returns a list of 2-tuples where the first element is a Path object to
         an input file for the next step in the workflow, and the second element
         is a Path object to the corresponding output file from the previous step.
-
         :param structure_files: a list of output files from the previous step
         :param structure_dest: the destination directory for the new input files
         :return: a list of 2-tuples of Path objects
@@ -234,7 +253,6 @@ class FlowRunner:
     def setup_input_files(self, show_progress: bool, overwrite: bool) -> None:
         """
         Sets up input files for the current workflow step.
-
         :param show_progress: displays progress bar in CLI if True
         :param overwrite: will automatically overwrite existing input files if True
         :return: None
@@ -289,6 +307,10 @@ class FlowRunner:
                     output_file.unlink()
 
     def get_prev_wave_failed_input_files(self) -> List[Path]:
+        """
+        Gets the input files from the previous wave's failed folder.
+        :return: a list of Path objects to the previous wave's failed input files
+        """
         input_files_source = self.get_prev_wave_dir() / "failed"
 
         input_file_ext = FlowRunner.PROGRAM_INFILE_EXTENSIONS[self.step_program]
@@ -300,22 +322,35 @@ class FlowRunner:
         return input_files
 
     def get_next_wave_id(self) -> int:
+        """
+        Gets the next wave ID and increments the number of waves in the .params file.
+        :return: the next wave ID
+        """
         params = load_workflow_params()
         next_wave_id = params["num_waves"] + 1
         self.update_num_waves(next_wave_id)
         return next_wave_id
 
     def update_num_waves(self, num_waves: int) -> None:
+        """
+        Changes the ``num_waves`` parameter in the .params file with the given ``num_waves``.
+        :param num_waves: the new number of waves
+        :return: None
+        """
         update_workflow_params(num_waves=num_waves)
 
-    def get_unopt_pdb_file(self, inchi_key: str):
+    def get_unopt_pdb_file(self, inchi_key: str) -> Path:
+        """
+        Gets the unoptimized PDB file corresponding to the given ``inchi_key``
+        :param inchi_key: the InChIKey of the molecule
+        :return: a Path object to the unoptimized PDB file
+        """
         return self.workflow_dir / "unopt_pdbs" / "{}_0.pdb".format(inchi_key)
 
     def need_lowest_energy_confs(self) -> bool:
         """
         Determines if the lowest energy conformers need to be isolated at this
         point in the workflow.
-
         :return: True if the lowest energy conformers are necessary, False otherwise
         """
         try:
@@ -349,7 +384,6 @@ class FlowRunner:
         :param source_files: a list of Path objects from which to remove failed molecules
         :return: a filtered list of Path objects
         """
-
         completed_confs = {}
 
         for f in source_files:
@@ -418,8 +452,8 @@ class FlowRunner:
 
     def setup_sbatch_file(self, array_size: int) -> SbatchWriter:
         """
-        Creates an array sbatch file for the current workflow step.
-
+        Creates an array sbatch file for the current workflow step and writes
+        the sbatch file.
         :return: an SbatchWriter object
         """
         sbatch_filename = "{}_wave_{}.sbatch".format(self.current_step_id, self.current_wave_id)
@@ -447,7 +481,6 @@ class FlowRunner:
         Retrieves the command strings used to create the Slurm submission script
         for the current step. The commands make calls to ``pyflow`` to both run
         calculations and handle outputs.
-
         :return: a string of commands for run
         """
         run_command = Commands.get_run_command(step_id=self.current_step_id,
@@ -466,7 +499,6 @@ class FlowRunner:
         Creates a file named input_files.txt in the current workflow step directory.
         This text file is used by the array submission script to determine which input
         files to run.
-
         :return: the number of jobs in the array
         """
         input_file_extension = FlowRunner.PROGRAM_INFILE_EXTENSIONS[self.step_program]
@@ -484,9 +516,10 @@ class FlowRunner:
 
     def queue_dependents(self, job_id: int) -> None:
         """
-        Queues the dependent jobs for the currently running step with ID
-        ``self.current_step_id``.
-
+        Submits the dependent jobs for the currently running step with ID
+        ``self.current_step_id``. The dependent jobs have a dependency on the
+        given ``job_id``. This method also queues the wave restarter if the
+        ``attempt_restart`` paramter is set to True for the current step.
         :param job_id: the job ID for the currently running step
         :return: None
         """
@@ -541,7 +574,6 @@ class FlowRunner:
         """
         Prints a dictionary containing values of various SLURM environment variables
         which is useful for troubleshooting cluster or partition issues.
-
         :return: None
         """
         username = getuser()
@@ -565,9 +597,8 @@ class FlowRunner:
         should only be called from within a Slurm array submission script as it
         relies on the ``$SLURM_ARRAY_TASK_ID`` environment variable to determine
         which array calculation to run.
-
         :param step_id: the step ID to run
-        :param wave_id:
+        :param wave_id: the wave ID to run
         :param time: time limit in minutes
         :return: None
         """
@@ -580,7 +611,6 @@ class FlowRunner:
         """
         Determines the input file to run based on the ``$SLURM_ARRAY_TASK_ID``
         environment variable.
-
         :return: a Path object pointing to the input file
         """
         task_id = int(os.environ["SLURM_ARRAY_TASK_ID"])
@@ -591,7 +621,6 @@ class FlowRunner:
     def run_quantum_chem(self, input_file: Path, time: int = None) -> None:
         """
         Runs a quantum chemistry calculation as a subprocess.
-
         :param input_file: the input file to run
         :param time: time limit in minutes
         :return: None
@@ -621,7 +650,6 @@ class FlowRunner:
     def is_complete(self, output_file: Path) -> bool:
         """
         Determines if the given output file completed successfully.
-
         :param output_file: a Path object pointing to the output file
         :return: True if successful, False otherwise
         :raises AttributeError: if this method doesn't support the current step program
@@ -643,10 +671,12 @@ class FlowRunner:
     @staticmethod
     def handle_array_output(step_id: str, wave_id: int) -> None:
         """
-
-        :param step_id:
-        :param wave_id:
-        :return:
+        Static method for handling the output of an array calculation in a workflow.
+        The method determines if the calculation completed, and moves the input/output
+        files to the completed or failed directory accordingly.
+        :param step_id: the step ID to handle
+        :param wave_id: the wave ID to handle
+        :return: None
         """
         flow_runner = FlowRunner(step_id=step_id, wave_id=wave_id)
         input_file = flow_runner.get_input_file()
@@ -669,7 +699,7 @@ class FlowRunner:
             for f in glob("{}*".format(output_file.with_suffix(""))):
                 shutil.move(f, str(completed_dest))
 
-            flow_runner._clear_scratch_files(input_file.stem)
+            flow_runner.clear_scratch_files(input_file.stem)
         else:
             failed_dest = flow_runner.current_wave_dir / "failed"
 
@@ -677,20 +707,34 @@ class FlowRunner:
             for f in glob("{}*".format(output_file.with_suffix(""))):
                 shutil.move(f, str(failed_dest))
 
-    def _clear_scratch_files(self, filename: str):
+    def clear_scratch_files(self, filename: str) -> None:
+        """
+        Removes the scratch files corresponding to the given filename (without a
+        suffix).
+        :param filename: the file whose scratch files to remove
+        :return: None
+        """
         if self.step_program == "gamess":
             try:
                 scratch_dir = Path(os.environ["SCRATCH"]).resolve()
+                gamess_scr = scratch_dir / "scr"
+                scratch_files = [Path(f) for f in glob(str(gamess_scr / "{}*.*".format(filename)))]
+                for f in scratch_files:
+                    f.unlink()
             except ValueError:
                 return None
-            gamess_scr = scratch_dir / "scr"
-            scratch_files = [Path(f) for f in glob(str(gamess_scr / "{}*.*".format(filename)))]
-            for f in scratch_files:
-                f.unlink()
 
     def update_input_file(self, input_file: Path, output_file: Path, dest: Path) -> bool:
+        """
+        Updates the given failed or timed-out ``input_file`` to be restarted. The
+        method uses the results in the ``output_file`` to determine how to update
+        the input file. The updated input file is then moved to the specified ``dest``.
+        :param input_file: the input file to update
+        :param output_file: the failed or timed-out output file
+        :param dest: the destination for the updated input file
+        :return: True if the input file has been updated, False otherwise
+        """
         if self.step_program == "gaussian16":
-
             from pyflow.flow.gaussian_restarter import GaussianRestarter
             inchi_key = input_file.name.split("_")[0]
             unopt_pdb_file = self.get_unopt_pdb_file(inchi_key)
@@ -722,7 +766,6 @@ class FlowRunner:
         """
         Removes .o and .e files corresponding to the current ``$SLURM_ARRAY_JOB_ID``
         and ``$SLURM_ARRAY_TASK_ID``.
-
         :return: None
         """
         array_id = os.environ["SLURM_ARRAY_JOB_ID"]
@@ -737,7 +780,7 @@ class FlowRunner:
         """
         Renames the .o and .e files corresponding to the current ``$SLURM_ARRAY_JOB_ID``
         and ``$SLURM_ARRAY_TASK_ID`` with the given name.
-
+        :param name: the new name for the array files
         :return: None
         """
         array_id = os.environ["SLURM_ARRAY_JOB_ID"]
@@ -750,8 +793,7 @@ class FlowRunner:
     def save_output(self, output_file: Path) -> None:
         """
         Creates a copy of the given output file in /work/lopez/workflows
-
-        :param output_file:
+        :param output_file: the output file to save
         :return: None
         """
         workflow_params = load_workflow_params()

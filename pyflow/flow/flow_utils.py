@@ -79,6 +79,12 @@ def load_workflow_params() -> dict:
 
 
 def update_workflow_params(**kwargs) -> None:
+    """
+    Updates the specified workflow parameters in the .params file with the
+    specified values.
+    :param kwargs: a dict of parameters and new values
+    :return: None
+    """
     workflow_params_file = upsearch(WORKFLOW_PARAMS_FILENAME)
     workflow_params = load_workflow_params()
     for k, v in kwargs.items():
@@ -93,17 +99,24 @@ def get_path_to_pyflow() -> Path:
     """
     Returns a ``Path`` object which points to the ``PYFLOW`` environment variable.
     ``PYFLOW`` should point to the directory containing the pyflow module.
-
     :return: a Path object with the path to ``PYFLOW``
     """
     return Path(os.environ["PYFLOW"])
 
 
-def get_default_config_file():
+def get_default_config_file() -> Path:
+    """
+    Returns a ``Path`` object pointing to the default config file.
+    :return: a Path object
+    """
     return get_path_to_pyflow() / "pyflow" / "conf" / CONFIG_FILE
 
 
 def get_default_params_file():
+    """
+    Returns a ``Path`` object pointing
+    :return:
+    """
     return get_path_to_pyflow() / "pyflow" / "conf" / RUN_PARAMS_FILENAME
 
 

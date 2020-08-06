@@ -7,15 +7,18 @@ from pyflow.flow.flow_utils import WORKFLOW_PARAMS_FILENAME
 
 def setup_dirs(save_location: str, workflow_name: str, config_file: str, config_id: str) -> None:
     """
+    Sets up the directories for a new workflow run. This function uses the config
+    specified in the given ``config_file`` to determine what step directories to
+    create. In addition, this function initializes the .params file in the main
+    directory of the workflow. The .params file records the path to the config file
+    and the config_id.
 
-    :param save_location:
-    :param workflow_name:
-    :param config_file:
-    :param config_id:
-
+    :param save_location: the location to setup the new workflow
+    :param workflow_name: the name of the workflow
+    :param config_file: the config file for the workflow
+    :param config_id: the config ID for the workflow
     :return: None
     :raises FileExistsError: if the specified workflow directory already exists
-
     """
 
     save_location = Path(save_location)

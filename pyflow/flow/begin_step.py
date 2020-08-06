@@ -9,14 +9,14 @@ from pyflow.io.io_utils import upsearch
 
 
 def begin_step(step_id: str = None, show_progress: bool = False, wave_id: int = 1,
-               do_not_track: bool = False, attempt_restart: bool = False) -> None:
+               attempt_restart: bool = False, do_not_track: bool = False) -> None:
     """
     Starts running the specified workflow step.
     :param step_id: the ID of the step to start running
     :param show_progress: displays command-line progress bar if True, no progress bar otherwise
-    :param wave_id:
+    :param wave_id: the ID of the wave to submit
+    :param attempt_restart: if True, restarts the specified wave, otherwise submits a new wave
     :param do_not_track: if True, does not track the workflow in the tracked_workflows.csv file
-    :param attempt_restart:
     :return: None
     """
 
@@ -63,19 +63,3 @@ def begin_step(step_id: str = None, show_progress: bool = False, wave_id: int = 
                              attempt_restart=attempt_restart)
 
     flow_runner.run(show_progress=show_progress)
-
-
-"""
-def initial_setup(flow_config: FlowConfig, workflow_params: dict, workflow_params_file: Path) -> None:
-
-    # add conformer information to .params file
-    has_conformers = flow_config.get_step(flow_config.get_initial_step_id())["conformers"]
-    if has_conformers:
-        num_conformers = int(input("How many conformers does each molecule have?\n"))
-    else:
-        num_conformers = 1
-
-    workflow_params["num_conformers"] = num_conformers
-    with workflow_params_file.open("w") as f:
-        f.write(json.dumps(workflow_params, indent=4))
-"""

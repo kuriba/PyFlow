@@ -55,10 +55,10 @@ class FlowAction:
             type=str,
             help=FlowAction.ACTION_HELP)
 
-        try:
+        if len(sys.argv) > 1:
             args = parser.parse_args(sys.argv[1:2])
-        except:
-            # parser.print_help()
+        else:
+            parser.print_help()
             sys.exit(0)
 
         if not hasattr(self, args.action):
@@ -156,7 +156,7 @@ class FlowAction:
     def run(self) -> None:
         """
         Runs a quantum chemistry calculation as part of a Slurm array.
-        :return:
+        :return: None
         """
         from pyflow.flow.flow_runner import FlowRunner
 
@@ -187,8 +187,7 @@ class FlowAction:
     def handle(self) -> None:
         """
         Handles processing of output from a quantum chemistry calculation run as
-        part of an array
-
+        part of an array.
         :return: None
         """
         from pyflow.flow.flow_runner import FlowRunner
@@ -229,7 +228,6 @@ class FlowAction:
         Method for displaying tracked workflows.
         :return: None
         """
-
         from pyflow.flow.flow_tracker import FlowTracker
 
         parser = argparse.ArgumentParser(description="View tracked workflows")

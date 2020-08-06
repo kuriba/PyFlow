@@ -14,25 +14,31 @@ class FlowConfig:
     Class for parsing and storing the configuration file of a workflow. It uses
     the JSON format to store the calculation steps for a workflow.
 
-    The general structure of the dictionary is as follows, where the "default"
-    key is config_id that points to the number of :
-    ::
-        { "default":
-            {
-                "initial_step": "X",
-                "steps": {
-                    "X": {
-                        "program": "gaussian16",
-                        "route": "#p pm7 opt",
-                        "opt": true,
-                        "conformers": true,
-                        "dependents": ["Y"]
-                    },
-                    "Y": {...},
-                    "Z": {...}
-                }
+    The general structure of the dictionary is as follows:
+     ::
+    { "default":
+        {
+            "initial_step": "X",
+            "steps": {
+                "X": {
+                    "program": "gaussian16",
+                    "route": "#p pm7 opt",
+                    "opt": true,
+                    "conformers": true,
+                    "dependents": ["Y"]
+                },
+                "Y": {...},
+                "Z": {...}
             }
         }
+    }
+
+    The "default" key is the config_id that refers to a flow configuration. The
+    flow configuration defines two keys: an ``initial_step`` and ``steps`` parameters.
+    The former declares the first step of the workflow, and the latter defines the
+    specific instructions for running each step. Each step must define a dictionary
+    of step parameters such as partition, memory, and time limits (an exhaustive
+    list of step parameters can be found below).
 
     Below is a list of general step parameters that are supported by all QC programs:
 
@@ -173,9 +179,9 @@ class FlowConfig:
         """
         Constructs a FlowConfig object which stores the configuration of the
         current workflow. The FlowConfig object validates the contents of the
-        config file and makes it simple to determine the next steps
-        :param config_file:
-        :param config_id:
+        config file and makes it simple to determine the next steps.
+        :param config_file: the config file to load
+        :param config_id: the config ID to load
         """
         config = self.load_flow_config(config_file, config_id)
         self.config = self._add_missing_step_params(config)
@@ -183,22 +189,8 @@ class FlowConfig:
     @staticmethod
     def load_flow_config(config_file: str, config_id: str) -> dict:
         """
-        Loads the workflow configuration stored in the ``.flow_config`` file of
-        a workflow into a dictionary. The ``.flow_config`` file uses the JSON
-        format to store the calculation steps for a workflow.
-
-        There is a general dictionary with the ID "default" which corresponds to
-        the default VERDE Materials DB workflow.  #TODO add workflow image link
-        The dictionary stores an ``"initial_step"`` parameter to determine where to
-        start a workflow. The steps of the workflow are stored in a nested
-        dictionary under the key ``"steps"``. Each step may define various parameters
-        including the following:
-
-        + ``"program"``
-        + ``"opt"``
-        + ``"route"`` (if ``"program" == "gaussian16"``)
-        + ``"dependents"``
-        + ``"conformers"``
+        Loads the workflow configuration with the specified ``config_id`` stored
+        in the file ``config_file``.
 
         For more details on flow configuration files and their accepted parameters
         see :class:`pyflow.flow.flow_config.FlowConfig`.
@@ -282,16 +274,32 @@ class FlowConfig:
 
     @staticmethod
     def valid_config_file(config_file: Path) -> bool:
+        """
+        Determines if the given ``config_file`` is valid.
+        :param config_file: the Path to the config file
+        :return: True if valid, False otherwise
+        """
         with config_file.open() as f:
             configs = json.load(f)
         return all([FlowConfig.valid_config(v) for k, v in configs.items()])
 
     @staticmethod
     def valid_step_id(step_id: str) -> bool:
+        """
+        Determines if the given ``step_id`` is valid. The length of the step ID
+        should be greater than 0, and it should not include any underscores.
+        :param step_id:
+        :return:
+        """
         return len(step_id) > 0 and "_" not in step_id
 
     @staticmethod
     def valid_step_program(step_program: str) -> bool:
+        """
+        Determines if the given ``step_program`` is valid.
+        :param step_program: the name of the program
+        :return: True if the program is valid, False otherwise
+        """
         return step_program in FlowConfig.SUPPORTED_PROGRAMS
 
     @staticmethod
@@ -305,6 +313,10 @@ class FlowConfig:
         import copy
 
         def request_step_id() -> str:
+            """
+            Asks the user to input a step ID through the command line.
+            :return: the step ID input by the user
+            """
             valid_step_id = False
             while not valid_step_id:
                 step_id = str(input("Please specify a step ID: "))
@@ -315,6 +327,11 @@ class FlowConfig:
             return step_id
 
         def request_step_program(step_id: str) -> str:
+            """
+            Asks the user to input a step program through the command line.
+            :param step_id: the step for which the program is being selected
+            :return: the step program input by the user
+            """
             valid_step_program = False
             while not valid_step_program:
                 select_program_msg = "Please select the QC program for step '{}': ".format(step_id)
@@ -324,7 +341,13 @@ class FlowConfig:
                     print("'{}' is an invalid QC program.".format(step_program))
             return step_program
 
-        def convert_type(value: str, desired_type: Any):
+        def convert_type(value: str, desired_type: Any) -> Any:
+            """
+            Converts the given string value to the desired type.
+            :param value: some string value
+            :param desired_type: the desired type
+            :return: the value with its type converted
+            """
             if desired_type == bool:
                 if value.lower() == "true":
                     return True
@@ -336,16 +359,21 @@ class FlowConfig:
                 return desired_type(value)
 
         def add_step(step_id: str = None, step_program: str = None, config: dict = None) -> dict:
-
+            """
+            Adds a step to the the given config. If the given config is None,
+            creates a new config with the specified step as the initial step.
+            :param step_id: the new step ID to add
+            :param step_program: the step program for the new step ID
+            :param config: the config to add the step to
+            :return:
+            """
             if step_id is None:
                 step_id = request_step_id()
             if step_program is None:
                 step_program = request_step_program(step_id)
 
             if config is None:
-                config = {}
-                config["initial_step"] = step_id
-                config["steps"] = {}
+                config = {"initial_step": step_id, "steps": {}}
 
             # create default dictionary of step parameters
             step_params = copy.deepcopy(FlowConfig.SUPPORTED_STEP_PARAMS["all"])
@@ -419,7 +447,6 @@ class FlowConfig:
         Adds missing step parameters with values determined by defaults in
         ``SUPPORTED_STEP_PARAMS`` class variable defined in ``FlowConfig``
         (see :class:`pyflow.flow.flow_config.FlowConfig` for more details).
-
         :param config: the workflow configuration
         :return: a dict with missing step parameters added
         """
@@ -438,7 +465,6 @@ class FlowConfig:
     def get_step(self, step_id: str) -> dict:
         """
         Returns the parameters for the workflow step with the given ``step_id``.
-
         :param step_id: unique string ID for a workflow step
         :return: a dict of parameters for a workflow step
         """
@@ -447,7 +473,6 @@ class FlowConfig:
     def get_all_steps(self) -> dict:
         """
         Returns the parameters for all workflow steps.
-
         :return: a dict of workflow steps
         """
         return self.config["steps"]
@@ -455,7 +480,6 @@ class FlowConfig:
     def get_step_ids(self) -> List[str]:
         """
         Returns an ordered list of step IDs for the current workflow.
-
         :return: a list of step IDs
         """
         initial_step = self.get_initial_step_id()
@@ -476,7 +500,6 @@ class FlowConfig:
     def get_initial_step_id(self) -> str:
         """
         Returns the ID of the first step in the workflow.
-
         :return: the ID of the first workflow step
         """
         return self.config["initial_step"]
@@ -484,7 +507,6 @@ class FlowConfig:
     def get_previous_step_id(self, step_id: str) -> str:
         """
         Returns the step ID of the step preceding the given step ID.
-
         :param step_id: the step ID whose previous step is desired
         :return: the previous step ID
         :raises ValueError: if the given step ID is the initial step or if it does not exist
@@ -504,7 +526,6 @@ class FlowConfig:
         """
         Returns a list of ``step_ids`` which depend on (*i.e.*, require the
         completion of) the given ``step_id``.
-
         :param step_id: the unique string ID for a workflow step
         :return: a list of dependent workflow steps
         """
@@ -536,7 +557,6 @@ class FlowConfig:
     def print(self):
         """
         Prints ``self.config`` to ``sys.stdout``.
-
         :return: None
         """
         print(dumps(self.config, indent=4))

@@ -31,8 +31,11 @@ class FlowTracker:
 
     @staticmethod
     def update_progress(workflow_id: str) -> None:
-        """Updates progress attribute in csv file"""
-
+        """
+        Updates the progress attribute in the tracked workflows csv file.
+        :param workflow_id: the workflow ID for which to update the progress
+        :return: None
+        """
         flow_tracker = FlowTracker(workflow_id)
 
         current_progress = FlowTracker.check_progress(verbose=False)
@@ -194,7 +197,6 @@ class FlowTracker:
         :param workflow_main_dir: the main directory in where the workflow is running
         :return: None
         """
-
         # workflow tracking
         print("Tracking workflow...")
         workflow_id = workflow_main_dir.name
@@ -219,7 +221,6 @@ class FlowTracker:
         :param config_file: the path to the config file to view
         :return: None
         """
-
         df = pd.read_csv(FlowTracker.TRACK_FILE, index_col=False)
 
         if workflow_id is not None:
