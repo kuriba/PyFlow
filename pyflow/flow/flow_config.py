@@ -15,30 +15,30 @@ class FlowConfig:
     the JSON format to store the calculation steps for a workflow.
 
     The general structure of the dictionary is as follows:
-     ::
-    { "default":
-        {
-            "initial_step": "X",
-            "steps": {
-                "X": {
-                    "program": "gaussian16",
-                    "route": "#p pm7 opt",
-                    "opt": true,
-                    "conformers": true,
-                    "dependents": ["Y"]
-                },
-                "Y": {...},
-                "Z": {...}
+    ::
+        { "default":
+            {
+                "initial_step": "X",
+                "steps": {
+                    "X": {
+                        "program": "gaussian16",
+                        "route": "#p pm7 opt",
+                        "opt": true,
+                        "conformers": true,
+                        "dependents": ["Y"]
+                    },
+                    "Y": {...},
+                    "Z": {...}
+                }
             }
         }
-    }
 
     The "default" key is the config_id that refers to a flow configuration. The
-    flow configuration defines two keys: an ``initial_step`` and ``steps`` parameters.
+    flow configuration defines two keys: ``initial_step`` and ``steps``.
     The former declares the first step of the workflow, and the latter defines the
     specific instructions for running each step. Each step must define a dictionary
-    of step parameters such as partition, memory, and time limits (an exhaustive
-    list of step parameters can be found below).
+    of step parameters including information such as partition, memory, and
+    time limits (an exhaustive list of step parameters can be found below).
 
     Below is a list of general step parameters that are supported by all QC programs:
 
