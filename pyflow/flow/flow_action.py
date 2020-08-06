@@ -71,6 +71,7 @@ class FlowAction:
     def setup(self) -> None:
         """
         Method used to set up workflow directories from the command line.
+
         :return: None
         """
         from pyflow.flow.setup_flow import setup_dirs
@@ -110,6 +111,7 @@ class FlowAction:
     def conformers(self) -> None:
         """
         Generates a library of conformers based on the given core.
+
         :return: None
         """
         pass  # TODO implement conformer generation
@@ -117,6 +119,7 @@ class FlowAction:
     def begin(self) -> None:
         """
         Begins running a workflow.
+
         :return: None
         """
         from pyflow.flow.begin_step import begin_step
@@ -156,6 +159,7 @@ class FlowAction:
     def run(self) -> None:
         """
         Runs a quantum chemistry calculation as part of a Slurm array.
+
         :return: None
         """
         from pyflow.flow.flow_runner import FlowRunner
@@ -188,6 +192,7 @@ class FlowAction:
         """
         Handles processing of output from a quantum chemistry calculation run as
         part of an array.
+
         :return: None
         """
         from pyflow.flow.flow_runner import FlowRunner
@@ -213,6 +218,7 @@ class FlowAction:
     def progress(self) -> None:
         """
         Method used to display current workflow progress.
+
         :return: None
         """
         from pyflow.flow.flow_tracker import FlowTracker
@@ -226,6 +232,7 @@ class FlowAction:
     def tracker(self) -> None:
         """
         Method for displaying tracked workflows.
+
         :return: None
         """
         from pyflow.flow.flow_tracker import FlowTracker
@@ -254,6 +261,7 @@ class FlowAction:
     def g16(self) -> None:
         """
         Method used to create Gaussian 16 input files.
+
         :return: None
         """
         from pyflow.io import gaussian_writer
@@ -265,6 +273,7 @@ class FlowAction:
     def sbatch(self) -> None:
         """
         Method used to create Slurm submission scripts.
+
         :return: None
         """
         from pyflow.io import sbatch_writer
@@ -276,6 +285,7 @@ class FlowAction:
     def update(self) -> None:
         """
         Method used to update Pyflow source code with most recent GitHub version.
+
         :return: None
         """
         import git
@@ -286,6 +296,7 @@ class FlowAction:
     def build_config(self) -> None:
         """
         Method used to build a workflow configuration file.
+
         :return: None
         """
         from pyflow.flow.flow_config import FlowConfig

@@ -180,6 +180,7 @@ class FlowConfig:
         Constructs a FlowConfig object which stores the configuration of the
         current workflow. The FlowConfig object validates the contents of the
         config file and makes it simple to determine the next steps.
+
         :param config_file: the config file to load
         :param config_id: the config ID to load
         """
@@ -194,6 +195,7 @@ class FlowConfig:
 
         For more details on flow configuration files and their accepted parameters
         see :class:`pyflow.flow.flow_config.FlowConfig`.
+
         :param config_file: path to the config file
         :param config_id: unique string ID for the desired workflow configuration
         :return: a dictionary with a workflow configuration
@@ -213,6 +215,7 @@ class FlowConfig:
         """
         Determines if the given config is validly formatted and contains
         parameters required by each program.
+
         :param config: a dictionary representing a workflow configuration
         :return: True if the workflow configuration is valid, False otherwise
         """
@@ -276,6 +279,7 @@ class FlowConfig:
     def valid_config_file(config_file: Path) -> bool:
         """
         Determines if the given ``config_file`` is valid.
+
         :param config_file: the Path to the config file
         :return: True if valid, False otherwise
         """
@@ -288,6 +292,7 @@ class FlowConfig:
         """
         Determines if the given ``step_id`` is valid. The length of the step ID
         should be greater than 0, and it should not include any underscores.
+
         :param step_id:
         :return:
         """
@@ -297,6 +302,7 @@ class FlowConfig:
     def valid_step_program(step_program: str) -> bool:
         """
         Determines if the given ``step_program`` is valid.
+
         :param step_program: the name of the program
         :return: True if the program is valid, False otherwise
         """
@@ -308,6 +314,7 @@ class FlowConfig:
         Method for helping the user build a flow configuration file for a custom
         workflow. Asks the user a series of command-line queries to construct the
         configuration file.
+
         :return: None
         """
         import copy
@@ -315,6 +322,7 @@ class FlowConfig:
         def request_step_id() -> str:
             """
             Asks the user to input a step ID through the command line.
+
             :return: the step ID input by the user
             """
             valid_step_id = False
@@ -329,6 +337,7 @@ class FlowConfig:
         def request_step_program(step_id: str) -> str:
             """
             Asks the user to input a step program through the command line.
+
             :param step_id: the step for which the program is being selected
             :return: the step program input by the user
             """
@@ -344,6 +353,7 @@ class FlowConfig:
         def convert_type(value: str, desired_type: Any) -> Any:
             """
             Converts the given string value to the desired type.
+
             :param value: some string value
             :param desired_type: the desired type
             :return: the value with its type converted
@@ -362,6 +372,7 @@ class FlowConfig:
             """
             Adds a step to the the given config. If the given config is None,
             creates a new config with the specified step as the initial step.
+
             :param step_id: the new step ID to add
             :param step_program: the step program for the new step ID
             :param config: the config to add the step to
@@ -447,6 +458,7 @@ class FlowConfig:
         Adds missing step parameters with values determined by defaults in
         ``SUPPORTED_STEP_PARAMS`` class variable defined in ``FlowConfig``
         (see :class:`pyflow.flow.flow_config.FlowConfig` for more details).
+
         :param config: the workflow configuration
         :return: a dict with missing step parameters added
         """
@@ -465,6 +477,7 @@ class FlowConfig:
     def get_step(self, step_id: str) -> dict:
         """
         Returns the parameters for the workflow step with the given ``step_id``.
+
         :param step_id: unique string ID for a workflow step
         :return: a dict of parameters for a workflow step
         """
@@ -473,6 +486,7 @@ class FlowConfig:
     def get_all_steps(self) -> dict:
         """
         Returns the parameters for all workflow steps.
+
         :return: a dict of workflow steps
         """
         return self.config["steps"]
@@ -480,6 +494,7 @@ class FlowConfig:
     def get_step_ids(self) -> List[str]:
         """
         Returns an ordered list of step IDs for the current workflow.
+
         :return: a list of step IDs
         """
         initial_step = self.get_initial_step_id()
@@ -500,6 +515,7 @@ class FlowConfig:
     def get_initial_step_id(self) -> str:
         """
         Returns the ID of the first step in the workflow.
+
         :return: the ID of the first workflow step
         """
         return self.config["initial_step"]
@@ -507,6 +523,7 @@ class FlowConfig:
     def get_previous_step_id(self, step_id: str) -> str:
         """
         Returns the step ID of the step preceding the given step ID.
+
         :param step_id: the step ID whose previous step is desired
         :return: the previous step ID
         :raises ValueError: if the given step ID is the initial step or if it does not exist
@@ -526,6 +543,7 @@ class FlowConfig:
         """
         Returns a list of ``step_ids`` which depend on (*i.e.*, require the
         completion of) the given ``step_id``.
+
         :param step_id: the unique string ID for a workflow step
         :return: a list of dependent workflow steps
         """
@@ -536,6 +554,7 @@ class FlowConfig:
         """
         Returns a list of directories needed to run the workflow step with the
         given ``step_id``.
+
         :param step_id: the unique string ID of the workflow step
         :return: a list of directories
         """
@@ -557,6 +576,7 @@ class FlowConfig:
     def print(self):
         """
         Prints ``self.config`` to ``sys.stdout``.
+
         :return: None
         """
         print(dumps(self.config, indent=4))

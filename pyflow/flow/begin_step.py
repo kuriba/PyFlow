@@ -12,6 +12,7 @@ def begin_step(step_id: str = None, show_progress: bool = False, wave_id: int = 
                attempt_restart: bool = False, do_not_track: bool = False) -> None:
     """
     Starts running the specified workflow step.
+
     :param step_id: the ID of the step to start running
     :param show_progress: displays command-line progress bar if True, no progress bar otherwise
     :param wave_id: the ID of the wave to submit

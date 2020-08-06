@@ -12,6 +12,7 @@ def setup_dirs(save_location: str, workflow_name: str, config_file: str, config_
     create. In addition, this function initializes the .params file in the main
     directory of the workflow. The .params file records the path to the config file
     and the config_id.
+
     :param save_location: the location to setup the new workflow
     :param workflow_name: the name of the workflow
     :param config_file: the config file for the workflow
