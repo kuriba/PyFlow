@@ -147,12 +147,12 @@ class FlowRunner:
 
         :return: None
         """
-        self.current_wave_dir.mkdir()
+        self.current_wave_dir.mkdir(exist_ok=True)
 
         sub_dirs = self.flow_config.get_step_directories(self.current_step_id)
         for d in sub_dirs:
             sub_dir_path = self.current_wave_dir / d
-            sub_dir_path.mkdir()
+            sub_dir_path.mkdir(exist_ok=True)
 
     def get_prev_step_id(self) -> str:
         """
