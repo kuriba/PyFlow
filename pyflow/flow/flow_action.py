@@ -79,10 +79,8 @@ class FlowAction:
         parser = argparse.ArgumentParser(description="PyFlow workflow directory setup")
 
         parser.add_argument(
-            "-n", "--name",
+            "workflow_name",
             type=str,
-            required=True,
-            dest="workflow_name",
             help="the name of the workflow")
 
         parser.add_argument(
