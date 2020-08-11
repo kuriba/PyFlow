@@ -39,7 +39,7 @@ PyFlow is a program designed to develop custom, modular, high-throughput quantum
 
 The heart of workflow customizability is in the workflow configuration file. The workflow configuration file is a JSON-formatted file that defines the steps in a workflow and instructions for how to run each step. This file has some specific formatting requirements but has the general structure shown below.
 
-```json
+```
 {
   "default": {
     "initial_step": "X",
