@@ -1,124 +1,217 @@
-# Workflow for the VERDE Materials Database
-The Virtual Excited State Reference for the Discovery of Electronic Materials Database (VERDE Materials DB) is a database of excited state geometries, energies, and properties of organic molecules with potential applications in sustainable materials including photovolatic cells and sunscreens. The calculations performed through this workflow allow one to probe the behavior and properties of photoexcited systems to streamline to the process of discovering novel, sustainable materials. The workflow for the calculations and data extraction follows four phases.
+# PyFlow: A Generalized Program for Running Custom Sequences of Quantum Chemistry Calculations using Slurm
+PyFlow is a program designed to develop custom, modular, high-throughput quantum chemistry screening workflows to support the discovery of novel, sustainable materials. PyFlow offers significant flexibility and allows you to easily setup an automated workflow for computing ground or excited state molecular geometries and energies.
 
-**Phase 1** involves the generation of a set of unique molecules and their initial conformers. Conformers receive an initial force field optimization using UFF.
+##### Prerequisites
+- Access to a high-performance computing (HPC) cluster
+- [Gaussian 16](https://gaussian.com/gaussian16/) and/or [GAMESS](https://www.msg.chem.iastate.edu/GAMESS/) version 2018-R1 or later
+- [Anaconda](https://www.anaconda.com/) with Python 3.8+
 
-**Phase 2** is where the lowest energy conformer is identified through semi-empirical optimizations and single-point DFT calculations.
+## Installation
+1. Clone this GitHub repository into your home directory on the cluster.
+	```console
+	git clone https://github.com/kuriba/PyFlow.git
+	```
+2. Go into the newly created `PyFlow` directory and set up an Anaconda environment using the provided environment.yml file.
+	```console
+    conda env create --file environment.yml
+	```
+3. Activate the newly created environment.
+	```console
+    conda activate pyflow
+	```
+4.  Run the following setup command within the PyFlow directory.
+    ```console
+    pip install -e .
+    ```
+5. Define the following environment variables in your .bashrc.*
+    ```console
+    export PYFLOW=~/PyFlow
+    export SCRATCH=/path/to/your/scratch/
+    ```
+	\*_Note: replace_`/path/to/your/scratch/`_with the actual path to your scratch directory._
+    
+6. If you intend to use GAMESS, create a directory called `scr` within your scratch directory.
 
-**Phase 3** consists of the majority of the DFT optimizations and includes optimization and frequency calculations in various electronic states including S<sub>0</sub>, S<sub>1</sub>, T<sub>1</sub>, and radical cations.
 
-**Phase 4** involves the extraction of data from the output files and calculation of various properties including geometries, ionization and redox potentials, and 0-0 transition energies.
+## Creating a custom workflow
 
-![alt text](misc/workflow_image.png)
+### The workflow configuration file
 
-#### Methodology
-##### Combinatorial molecule generation
-Once a core has been selected, it is substituted at various, user-specified positions with a set of 20 conjugated spacer groups. The new molecules then undergo substitution at pre-determined terminal positions with a set of 11 terminal groups. Below is an example.
+The heart of workflow customizability is in the workflow configuration file. The workflow configuration file is a JSON-formatted file that defines the steps in a workflow and instructions for how to run each step. This file has some specific formatting requirements but has the general structure shown below.
 
-![alt text](misc/spacers_and_terminals.png)
-
-##### Conformer generation
-Conformer generation is performed by converting the combinatorially generated molecules from SMILES strings to a UFF-optimized set of four conformers. The conformers are then converted into PDB files which are used to generate input files for the PM7 optimization.
-
-##### Semi-empirical optimizations
-The generated conformers undergo optimization at two levels: a PM7 optimization (using Gaussian 16) followed by an RM1-D optimization (using GAMESS). Each RM1-D optimized conformer then undergoes a single-point DFT calculation at the `M06/6-31+G(d,p)` level to enable the more accurate comparison of the energies of the conformers.
-
-##### Lowest energy conformer selection
-For each molecule, the conformer with the lowest single-point energy at the end of the RM1-D optimization is selected as the starting point for the _in vacuo_ S<sub>0</sub> DFT optimization.
-
-##### DFT calculations
-Once the lowest energy conformer has been determined, its geometry is used as the starting point for _in vacuo_ S<sub>0</sub> DFT optimization. This DFT-optimized geometry is then used as the starting point for S<sub>0</sub>, S<sub>1</sub>, and T<sub>1</sub> DFT optimizations using an acetonitrile polarizable continuum model (IEFPCM<sup>MeCN</sup>). Additionally, the radical cation is optimized both _in vacuo_ and in IEFPCM<sup>MeCN</sup> to allow for the calculation of redox potentials. All DFT optimizations use the `M06/6-31+G(d,p)` method. Additionally, each DFT optimization is followed by a frequency calculation to compute thermal energies.
-
-## Getting started
-This workflow is designed to run on HPCs using the SLURM workload manager.
-
-### Prerequisites
-The cluster must provide access to [Gaussian 16](https://gaussian.com/gaussian16/) and [GAMESS](https://www.msg.chem.iastate.edu/GAMESS/) version 2018-R1 or later. 
-#### Molecule generation
-Running the `pymolgen.py` script requires several python packages which may not be offered or easily installable on many HPCs, thus it is likely easier to generate your molecules locally then upload the conformers to the HPC. The `rdkit_win.yaml` and `rdkit_mac.yaml` files in the `misc` folder list the required packages for the `pymolgen.py` script (the file ending in `win` is for Windows users and the file ending in `mac` is for Mac users). These files can be used to install the required packages with Anaconda. If you haven't already, download [Anaconda](https://www.anaconda.com/distribution/) with Python 3.7. Once installed, open your command-line interface, go to the directory containing the `.yaml` file, and create a new conda environment.
-```console
-conda env create --file rdkit_win.yaml --name rdkit_env
-```
-When the packages have finished downloading and installing, activate the environment.  
-Windows:
-```console
-conda activate rdkit_env
-```
-Mac:
-```console
-source activate rdkit_env
-```
-Once this is done, you are ready to execute the `pymolgen.py` script (see [generating molecules](#generating-molecules) below).
-
-### Installing
-To install the workflow, first, clone this GitHub repository into your home directory.
-```console
-git clone https://github.com/kuriba/flow.git
-```
-Then, go to the directory and run the init.sh script. This must only be done the first time you are installing the workflow.
-```console
-bash init.sh
-```
-The initialization script will modify your .bashrc file and assumes it to be located at `~/.bashrc` (if this isn't the case, modify the location, specified by the `bashrc_source` variable, in the `init.sh` script). In addition, the script assumes your scratch directory to be located at `/scratch/$USER` (modify the `scratch_dir` variable in `init.sh`, if this is not the case).
-
-## Running the workflow
-Execution of the workflow is accomplished in three steps: Creating a directory for the workflow, generating and uploading conformers as PDB files to the `unopt_pdbs` folder of the workflow, then submitting the workflow. 
-
-### Generating molecules
-Molecules can be generated according to the [combinatorial methodology](#combinatorial-molecule-generation) described above. The `pymolgen.py` script included in the `utils` folder can be used to accomplish this. Simply create a SMILES string for a molecule with uranium atoms at the positions where you would like to attach spacer groups.
-
-<p align="center">
-  <img src="https://github.com/kuriba/flow/blob/master/misc/example_mol_gen_input.png" alt="Your image title" width="250"/>
-  <p align="center">[U]C1=C(C2=C3C4=CC=C2C=C1)C=CC3=C5C=CC6=C(C=CC7=CC=C4C5=C67)[U]</p>
-</p>
-
-Then run the `pymolgen.py` script from a directory where you'd like to store the generated structures. Run the script as follows (ensure that you have installed the preqrequisite packages and activated the correct environment, see [molecule generation](#molecule-generation) above):
-```console
-python pymolgen.py pyroperylenes_2sub [U]C1=C(C2=C3C4=CC=C2C=C1)C=CC3=C5C=CC6=C(C=CC7=CC=C4C5=C67)[U]
-```
-This will combinatorially generate molecules by performing substitutions on the given core. Each unique molecule will then be used to produce four conformers which are placed in a directory called `pyroperylenes_2sub` (the directory is automatically created if it doesn't already exist). The PDB files are named by the InChIKey of the molecule followed by an underscore and number indicating the conformer ID (starting from 0).
-
-If you would like to use manually generated molecules, simply ensure that each conformer for each molecule is numbered starting from 0. For example:
-```console
-mol_0.pdb
-mol_1.pdb
-mol_2.pdb
-other_mol_0.pdb
-other_mol_1.pdb
-other_mol_2.pdb
+```json
+{
+  "default": {
+    "initial_step": "X",
+    "steps": {
+      "X": {
+        "program": "gaussian16",
+        "route": "#p pm7 opt",
+        "opt": true,
+        "conformers": true,
+        "dependents": ["Y"]
+      },
+      "Y": { ... },
+      "Z": { ... }
+    }
+  },
+  "alt": { ... }
+}
 ```
 
-### Preparing submission
+The "default" key is a `config_id` that refers to a flow configuration. The second `config_id`, "alt", refers to another flow configuration. It's possible to define multiple flow configurations in a single file for the sake of organization. The desired workflow configuration can be selected at runtime. Each flow configuration is a JSON object that must specify two keys: `initial_step` and `steps`. The former declares the first step of the workflow, and the latter defines the specific instructions for running each step. Each step must define a JSON object of step parameters such as partition, memory, and time limits (see supported workflow step parameters below for an exhaustive list of supported step parameters). In the example configuration above, the defined steps are "X", "Y", and "Z".
+
+#### Supported workflow step parameters
+##### General step parameters 
+The following step parameters are supported by all QC programs
+
+| Parameter | Description | Data type | Default |
+| :-------- | :---------- | :-------- | :------ |
+| `program` | the QC program to use | `str` | `none` |
+| `opt` | whether the step includes an optimization | `bool` | `true` |
+| `freq` | whether the step includes a frequency calculation | `bool` | `false` |
+| `single_point` | whether the step is a single-point calculation | `bool` | `false` |
+| `conformers` | whether the step has conformers | `bool` | `false` |
+| `proceed_on_failed_conf` | if `true`, allow molecules with failed conformers to proceed to the next step | `bool` | `true` |
+| `attempt_restart` | whether to attempt to restart a calculation upon timeout or failure | `bool` | `false` |
+| `nproc` | number of cores to request through Slurm | `int` | `14` |
+| `memory` | amount of memory to request, in GB | `int` | `8` |
+| `time` | the time limit for the calculation, in minutes | `int` | `1400` |
+| `time_padding` | the time limit for processing/handling calculation outputs (the overall time limit for the Slurm submission is `time + time_padding`) | `int` | `5` |
+| `partition` | the partition to request for the step | `str` | `short` |
+| `simul_jobs` | the number of jobs to simultaneously run | `int` | `50` |
+| `save_outputs` | whether to save the results of a step in /work/lopez/workflows | `bool` | `false` |
+| `dependents` | a list of step IDs that are to be run after the completion of the current step | `List[string]` | `[]` |
+| `charge` | the charge by which to increment all molecules | `int` | `0` |
+| `multiplicity` | the multiplicity of the molecules | `int` | `1` |
+
+##### Quantum chemistry program-specific step parameters*
+
+<table>
+	<tr>
+		<td width="125"><b>QC program</b></td>
+		<td><b>Parameter</b></td>
+		<td><b>Description</b></td>
+		<td width="100"><b>Data type</b></td>
+		<td><b>Default</b></td>
+	</tr>
+	<tr>
+		<td rowspan=3>gaussian16</td>
+		<td><code>route</code></td>
+		<td>the full route for the calculation</td>
+		<td><code>str</code></td>
+		<td><code>none</code></td>
+	</tr>
+	<tr>
+		<td><code>rwf</code></td>
+		<td>whether to save the .rwf file</td>
+		<td><code>bool</code></td>
+		<td><code>false</code></td>
+	</tr>
+	<tr>
+		<td><code>chk</code></td>
+		<td>whether to save the .chk file</td>
+		<td><code>bool</code></td>
+		<td><code>false</code></td>
+	</tr>
+	<tr>
+		<td rowspan=8>gamess</td>
+		<td><code>gbasis</code></td>
+		<td>Gaussian basis set specification</td>
+		<td><code>str</code></td>
+		<td><code>none</code></td>
+	</tr>
+	<tr>
+		<td><code>runtyp</code></td>
+		<td>the type of computation (e.g., energy, gradient, etc.)</td>
+		<td><code>str</code></td>
+		<td><code>none</code></td>
+	</tr>
+	<tr>
+		<td><code>dfttyp</code></td>
+		<td>DFT functional to use (ab initio if unspecified)</td>
+		<td><code>str</code></td>
+		<td><code>none</code></td>
+	</tr>
+	<tr>
+		<td><code>maxit</code></td>
+		<td>maximum number of SCF iteration cycles</td>
+		<td><code>int</code></td>
+		<td><code>30</code></td>
+	</tr>
+	<tr>
+		<td><code>opttol</code></td>
+		<td>gradient convergence tolerance, in Hartree/Bohr</td>
+		<td><code>float</code></td>
+		<td><code>0.0001</code></td>
+	</tr>
+	<tr>
+		<td><code>hess</code></td>
+		<td>selects the initial Hessian matrix</td>
+		<td><code>str</code></td>
+		<td>depends on <code>runtyp</code> (see GAMESS documentation)</td>
+	</tr>
+	<tr>
+		<td><code>nstep</code></td>
+		<td>maximum number of steps to take</td>
+		<td><code>int</code></td>
+		<td>50 for minimum search, 20 for transition state search</td>
+	</tr>
+	<tr>
+		<td><code>idcver</code></td>
+		<td>the dispersion correction implementation to use</td>
+		<td><code>int</code></td>
+		<td><code>none</code></td>
+	</tr>
+</table>
+
+*_refer to the documentation specific to each QC program for more details on valid arguments for each parameter_
+
+### Workflow customization utility
+It is possible to manually create a workflow configuration file in any text editor, but this places the burden of properly formatting the JSON file and including required step parameters on the user. To simplify the creation of properly-formatted workflow configuration files, the program includes the `build_config` utility for creating custom workflows via the command line. To access the utility, use the following command, replacing `new_config.json` and `default` with the desired configuration file name and configuration ID, respectively.
+```console
+pyflow build_config --config_file new_config.json --config_id default
+```
+You will see several prompts to enter step information and modify step parameters for your new workflow configuration (you can add a workflow configuration with a new ID to an existing configuration file by providing the path to the existing config file as the argument for `--config_file`).
+
+
+## Setting up and running a workflow
+
+Execution of a workflow is accomplished in three steps:
+1. Setting up a directory for the workflow
+2. Uploading molecules (as PDB files) to the `unopt_pdbs` folder of the workflow
+3. Submitting the workflow
+
 ##### Setting up a workflow directory
-To create a directory for your workflow, go to your scratch directory and run the `setup_flow` command followed by the name of the workflow.
+To create a directory for your workflow, go to your scratch directory and run the following command, replacing `my_first_workflow` with your desired workflow name. The argument for the `config_file` flag should be the path to the desired workflow configuration file, and the argument for the `config_id` flag specifies which configuration to use from the specified configuration file.
 ```console
-setup_flow my_first_workflow
+pyflow setup my_first_workflow --config_file /path/to/config/file --config_id "default"
 ```
-This will create a workflow directory tree. Maintenance of the structure of the tree is crucial for the proper automation of the flow because it relies on relative positions of directories to automate certain tasks.
-
+##### Uploading molecules
+Next, place the molecules for the workflow in the `unopt_pdbs` folder of the workflow directory that was created in the previous step. The structures should use the PDB format. The files should be named with the InChIKey of the molecule, followed by an underscore, followed by the conformer ID*, starting from 0.
+```
+XXXXXXXXXXXXXX-YYYYYYYYYY-Z_0.pdb
+XXXXXXXXXXXXXX-YYYYYYYYYY-Z_1.pdb
+XXXXXXXXXXXXXX-YYYYYYYYYY-Z_2.pdb
+XXXXXXXXXXXXXX-YYYYYYYYYY-Z_3.pdb
+```
+*_Note: If you only have one conformer for each molecule, the PDB files should each have the conformer ID "0"._
 ##### Submitting the workflow
-Once the workflow directory has been made, place your conformer PDB files in the `unopt_pdbs` folder, then, while in the workflow tree, execute the `begin_calcs` command which will use the PDB files to create input files for the PM7 optimization and submit a workflow.
+To submit the workflow, run the following command while you're located in the workflow directory. This command will set up the input files for the first step using the initial coordinates from the structures in the `unopt_pdbs` folder, then submit them as an array.
 ```console
-begin_calcs
+pyflow begin
 ```
-
-##### Monitoring progress
-The `check_prog` command is provided for monitoring the progress of a workflow. To use it, simply go to the directory of a running or completed workflow and execute the script.
+##### Progress monitoring
+The `progress` command is provided for easily monitoring the progress of a workflow. To use it, simply go to the directory of a running or completed workflow and execute the following command. This will output a small report on the overall progress of the calculations.
 ```console
-check_prog
+pyflow progress
 ```
-This will output a small report of the overall progress of the calculations.
-
-##### Handling abruptly stopped optimizations
-If an array of DFT optimizations is stopped abruptly for some reason (e.g. node failure), the incomplete portion of the array can be resubmited using the `resubmit_dft_opts.sh` script included in the utils folder. The script automatically determines which jobs need to be resubmitted and creates the input files and submits them as an array. To use this script, simply enter the folder of the DFT calculation which was abruptly stopped (e.g. t1_solv, s1_solv, s0_solv) and execute the script.
-```console
-bash $FLOW/utils/resubmit_dft_opts.sh
-```
-
-## Acknowledgements
+---
+#### Acknowledgements
 
    Prof. Steven A. Lopez  
    Dr. Jordan Cox  
+   Daniel Adrion  
    Fatemah Mukadum  
    Patrick Neal  
  
