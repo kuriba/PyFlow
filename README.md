@@ -1,7 +1,7 @@
 # PyFlow: A Generalized Program for Running Custom Sequences of Quantum Chemistry Calculations using Slurm
 PyFlow is a program designed to develop custom, modular, high-throughput quantum chemistry screening workflows to support the discovery of novel, sustainable materials. PyFlow offers significant flexibility and allows you to easily setup an automated workflow for computing ground or excited state molecular geometries and energies.
 
-##### Prerequisites
+#### Prerequisites
 - Access to a high-performance computing (HPC) cluster
 - [Gaussian 16](https://gaussian.com/gaussian16/) and/or [GAMESS](https://www.msg.chem.iastate.edu/GAMESS/) version 2018-R1 or later
 - [Anaconda](https://www.anaconda.com/) with Python 3.8+
@@ -182,12 +182,12 @@ Execution of a workflow is accomplished in three steps:
 2. Uploading molecules (as PDB files) to the `unopt_pdbs` folder of the workflow
 3. Submitting the workflow
 
-##### Setting up a workflow directory
+#### Setting up a workflow directory
 To create a directory for your workflow, go to your scratch directory and run the following command, replacing `my_first_workflow` with your desired workflow name. The argument for the `config_file` flag should be the path to the desired workflow configuration file, and the argument for the `config_id` flag specifies which configuration to use from the specified configuration file.
 ```console
 pyflow setup my_first_workflow --config_file /path/to/config/file --config_id "default"
 ```
-##### Uploading molecules
+#### Uploading molecules
 Next, place the molecules for the workflow in the `unopt_pdbs` folder of the workflow directory that was created in the previous step. The structures should use the PDB format. The files should be named with the InChIKey of the molecule, followed by an underscore, followed by the conformer ID*, starting from 0.
 ```
 XXXXXXXXXXXXXX-YYYYYYYYYY-Z_0.pdb
@@ -196,12 +196,12 @@ XXXXXXXXXXXXXX-YYYYYYYYYY-Z_2.pdb
 XXXXXXXXXXXXXX-YYYYYYYYYY-Z_3.pdb
 ```
 *_Note: If you only have one conformer for each molecule, the PDB files should each have the conformer ID "0"._
-##### Submitting the workflow
+#### Submitting the workflow
 To submit the workflow, run the following command while you're located in the workflow directory. This command will set up the input files for the first step using the initial coordinates from the structures in the `unopt_pdbs` folder, then submit them as an array.
 ```console
 pyflow begin
 ```
-##### Progress monitoring
+#### Progress monitoring
 The `progress` command is provided for easily monitoring the progress of a workflow. To use it, simply go to the directory of a running or completed workflow and execute the following command. This will output a small report on the overall progress of the calculations.
 ```console
 pyflow progress
