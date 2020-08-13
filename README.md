@@ -214,7 +214,7 @@ pyflow progress
 ## File generation utilities
 To simplify the generation of Gaussian 16 input files and Slurm submission scripts, these utilities are accessible as their own actions: `g16` and `sbatch`, respectively. Below you'll find several examples which demonstrate how to use these utilities to generate files.
 
-#### Gaussian 16 input files
+### Gaussian 16 input files
 Generating a Gaussian 16 input file requires two arguments: a route and a geometry file (for the initial coordinates).
 
 In this first example, a Gaussian 16 input file named `file.com` will be generated with the coordinates from file.pdb and the route "#p pm7 opt". This example uses default values for the charge (0), multiplicity (1), nproc (14), and memory (8 GB).
@@ -231,7 +231,7 @@ pyflow g16 -r "#p pm7 opt" -g /path/to/geometry/file.o --geometry_format xyz
 ```
 _Note: use `pyflow g16 --help` for an exhaustive list of options available for generating Gaussian 16 input files._
 
-#### Slurm submission scripts
+### Slurm submission scripts
 Generating Slurm submission scripts requires two arguments: a jobname and a file with commands to run.
 
 In this example, a Slurm submission script named `generic_slurm_job.sbatch` will be generated with the commands in the commands.txt text file.
