@@ -1,5 +1,3 @@
-# TODO set user email
-
 import codecs
 from os import path
 
@@ -27,10 +25,10 @@ with open(path.join(here, 'README.md'), "r") as fh:
     long_description = fh.read()
 
 setup(
-    name="pyflow",  # TODO update package name
+    name="pyflow",
     version=get_version("pyflow/__init__.py"),
     author="Biruk Abreha",
-    author_email="abreha.b@husky.neu.edu",  # TODO update author/email
+    author_email="lopezlabassistant@gmail.com",
     description="A generalized, automated program for running custom sequences of quantum chemistry calculations",
     long_description=long_description,
     long_description_content_type="text/markdown",

@@ -139,6 +139,3 @@ def get_num_conformers(inchi_key: str) -> int:
 
     return num_conformers
 
-
-def copy_to_long_term_storage() -> None:
-    pass  # TODO implement copy_to_long_term_storage

@@ -14,7 +14,7 @@ class FlowAction:
     """
 
     ACTION_CHOICES = ('begin', 'run', 'handle', 'progress', 'tracker', 'setup',
-                      'conformers', 'g16', 'sbatch', 'update', 'build_config')
+                      'g16', 'sbatch', 'update', 'build_config')
 
     ACTION_HELP = textwrap.dedent("""
         Actions:
@@ -24,7 +24,6 @@ class FlowAction:
         progress = display the progress for the current workflow
         tracker = view a list of all tracked workflows
         setup = set up a directory for a new workflow
-        conformers = generate conformers
         g16 = write a Gaussian 16 input file
         sbatch = write a Slurm submission script
         update = download the latest Pyflow code from GitHub
@@ -105,14 +104,6 @@ class FlowAction:
         args = vars(parser.parse_args(sys.argv[2:]))
 
         setup_dirs(**args)
-
-    def conformers(self) -> None:
-        """
-        Generates a library of conformers based on the given core.
-
-        :return: None
-        """
-        pass  # TODO implement conformer generation
 
     def begin(self) -> None:
         """

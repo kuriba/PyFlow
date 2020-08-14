@@ -14,10 +14,9 @@ from typing import List, Tuple
 import grp
 from tqdm import tqdm
 
+import pyflow.flow.flow_utils as flow_utils
 from pyflow.flow.commands import Commands
 from pyflow.flow.flow_config import FlowConfig
-from pyflow.flow.flow_utils import get_num_conformers, load_workflow_params, WORKFLOW_PARAMS_FILENAME, \
-    update_workflow_params
 from pyflow.io.gamess_writer import GamessWriter
 from pyflow.io.gaussian_writer import GaussianWriter
 from pyflow.io.io_utils import upsearch, find_string
@@ -68,7 +67,7 @@ class FlowRunner:
         :param workflow_dir: the main directory of the workflow
         """
         if flow_config is None:
-            workflow_params = load_workflow_params()
+            workflow_params = flow_utils.load_workflow_params()
             config_file = workflow_params["config_file"]
             config_id = workflow_params["config_id"]
             self.flow_config = FlowConfig(config_file, config_id)
@@ -76,7 +75,7 @@ class FlowRunner:
             self.flow_config = flow_config
 
         if workflow_dir is None:
-            workflow_params_file = upsearch(WORKFLOW_PARAMS_FILENAME)
+            workflow_params_file = upsearch(flow_utils.WORKFLOW_PARAMS_FILENAME)
             self.workflow_dir = workflow_params_file.parent
         else:
             self.workflow_dir = workflow_dir
@@ -339,7 +338,7 @@ class FlowRunner:
 
         :return: the next wave ID
         """
-        params = load_workflow_params()
+        params = flow_utils.load_workflow_params()
         next_wave_id = params["num_waves"] + 1
         self.update_num_waves(next_wave_id)
         return next_wave_id
@@ -351,7 +350,7 @@ class FlowRunner:
         :param num_waves: the new number of waves
         :return: None
         """
-        update_workflow_params(num_waves=num_waves)
+        flow_utils.update_workflow_params(num_waves=num_waves)
 
     def get_unopt_pdb_file(self, inchi_key: str) -> Path:
         """
@@ -415,7 +414,7 @@ class FlowRunner:
         filtered_source_files = []
         for f in source_files:
             inchi_key = f.stem.split("_")[0]
-            num_conformers = get_num_conformers(inchi_key)
+            num_conformers = flow_utils.get_num_conformers(inchi_key)
             if completed_confs[inchi_key] == num_conformers:
                 filtered_source_files.append(f)
 
@@ -830,7 +829,7 @@ class FlowRunner:
         :param output_file: the output file to save
         :return: None
         """
-        workflow_params = load_workflow_params()
+        workflow_params = flow_utils.load_workflow_params()
         config_file = Path(workflow_params["config_file"])
         config_id = workflow_params["config_id"]
         dest = FlowRunner.SAVE_OUTPUT_LOCATION / config_file.stem / config_id / self.workflow_dir
