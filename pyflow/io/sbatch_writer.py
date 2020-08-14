@@ -68,10 +68,12 @@ class SbatchWriter(FileWriter):
         self.append("#!/bin/bash\n")
         self.append("#SBATCH -J {}\n".format(self.jobname))
 
-        self.args["output"] = self.args.get("output", "{}.o".format(self.jobname))
+        if self.args.get("output") is None:
+            self.args["output"] = "{}.o".format(self.jobname)
         self.append("#SBATCH -o {}\n".format(self.args["output"]))
 
-        self.args["error"] = self.args.get("error", "{}.e".format(self.jobname))
+        if self.args.get("error") is None:
+            self.args["error"] = "{}.e".format(self.jobname)
         self.append("#SBATCH -e {}\n".format(self.args["error"]))
 
         self.append("#SBATCH -N {}\n".format(self.args.get("nodes", 1)))
