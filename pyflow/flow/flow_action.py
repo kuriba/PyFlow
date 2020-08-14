@@ -297,7 +297,7 @@ class FlowAction:
 
         :return: None
         """
-        from pyflow.flow.flow_config import FlowConfig
+        from pyflow.flow.build_config import build_config
 
         parser = argparse.ArgumentParser(description="Build a workflow configuration file")
 
@@ -323,7 +323,7 @@ class FlowAction:
 
         args = vars(parser.parse_args(sys.argv[2:]))
 
-        FlowConfig.build_config(**args)
+        build_config(**args)
 
 
 def main():
