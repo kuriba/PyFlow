@@ -224,6 +224,8 @@ def parse_args(sys_args: List[str]) -> dict:
 def main(args: dict):
     filepath = Path(args.pop("location")).resolve() / "{}.sbatch".format(args["jobname"])
 
-    sbatch_writer = SbatchWriter(filepath=filepath, **args)
+    commands = Path(args.pop("commands")).read_text()
+
+    sbatch_writer = SbatchWriter(filepath=filepath, commands=commands, **args)
 
     sbatch_writer.write()
