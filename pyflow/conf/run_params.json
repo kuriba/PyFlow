@@ -3,7 +3,7 @@
     "slurm": {
       "email": null,
       "partition": "short",
-      "time_padding": 40,
+      "time_padding": 5,
       "simul_jobs": 50,
       "nodes": 1
     },
@@ -14,7 +14,7 @@
     },
     "gamess": {
       "nproc": 14,
-      "memory": 1000,
+      "memory": 8,
       "time": 1400
     }
   }
