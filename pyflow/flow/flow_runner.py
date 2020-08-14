@@ -501,7 +501,7 @@ class FlowRunner:
         for the current step. The commands make calls to ``pyflow`` to both run
         calculations and handle outputs.
 
-        :return: a string of commands for run
+        :return: a string of commands to run
         """
         run_command = Commands.get_run_command(step_id=self.current_step_id,
                                                wave_id=self.current_wave_id,
