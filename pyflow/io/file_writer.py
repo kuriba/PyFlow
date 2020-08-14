@@ -15,6 +15,8 @@ class FileWriter:
 
     def __init__(self, filepath: Path, text: str = "", overwrite: bool = False):
         """
+        Constructs a FileWriter object to write a text file at the specified
+        ``filepath``.
 
         :param filepath: the path to the write file
         :param text: the text to write
@@ -73,12 +75,12 @@ class AbstractInputFileWriter(FileWriter):
         Constructor for an AbstractInputFileWriter. This class abstracts the most
         general fields and methods of input file writers.
 
-        :param program:
-        :param filepath:
-        :param geometry_file:
-        :param geometry_format:
-        :param overwrite:
-        :param kwargs:
+        :param program: quantum chemistry program
+        :param filepath: path to the new input file
+        :param geometry_file: initial coordinates for the input file
+        :param geometry_format: format of the initial coordinates file
+        :param overwrite: if True, will overwrite specified file without prompting user
+        :param kwargs: keyword arguments specific to each type of input file
         """
         if filepath is None:
             filepath = Path().cwd() / geometry_file.name
@@ -121,6 +123,17 @@ class AbstractInputFileWriter(FileWriter):
                     geometry_file: Path,
                     geometry_format: str,
                     **kwargs) -> AbstractInputFileWriter:
+        """
+        Constructs an AbstractInputFileWriter based on the configuration of a
+        workflow step.
+
+        :param step_config: the workflow step configuration
+        :param filepath: path to the new input file
+        :param geometry_file: initial coordinates for the input file
+        :param geometry_format: format of the initial coordinates file
+        :param kwargs: keyword arguments specific to each type of input file
+        :return: a new AbstractInputFileWriter object
+        """
         return cls(filepath=filepath,
                    geometry_file=geometry_file,
                    geometry_format=geometry_format,

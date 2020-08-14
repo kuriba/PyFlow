@@ -141,9 +141,7 @@ def parse_args():
         "-w", "--memory",
         type=int,
         default=default_params["memory"],
-        help="maximum replicated memory which the job can use, on every core \
-              given in units of 1,000,000 words (MWORDs) where a word is \
-              defined as 64 bits; 1 MWORD = 0.008 GB")
+        help="maximum memory which the job can use, in GB")
 
     system_group.add_argument(
         "--time",
@@ -214,6 +212,8 @@ def parse_args():
 def main(args: dict) -> None:
     if args["title"] is None:
         args["title"] = Path(args["geometry_file"]).stem
+
+    args["memory"] = int(args["memory"] / 0.008)
 
     filepath = Path(args.pop("location")).resolve() / "{}.inp".format(args["title"])
 

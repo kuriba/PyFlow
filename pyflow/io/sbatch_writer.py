@@ -12,7 +12,7 @@ from pyflow.io.file_writer import FileWriter
 
 class SbatchWriter(FileWriter):
     """
-    Class for writing Slurm submission scripts
+    Class for writing Slurm submission scripts.
     """
 
     def __init__(self,
@@ -21,6 +21,15 @@ class SbatchWriter(FileWriter):
                  jobname: str = None,
                  overwrite: bool = False,
                  **kwargs):
+        """
+        Constructs an SbatchWriter used for writing Slurm submission scripts.
+
+        :param filepath: path to the new Slurm submission script
+        :param commands: commands to run in the Slurm script
+        :param jobname: name of the Slurm submission
+        :param overwrite: if True, will overwrite specified file without prompting user
+        :param kwargs: supported keyword arguments
+        """
         super().__init__(filepath=filepath, overwrite=overwrite)
 
         self.jobname = jobname
@@ -36,6 +45,15 @@ class SbatchWriter(FileWriter):
                     filepath: Path,
                     jobname: str,
                     **kwargs) -> SbatchWriter:
+        """
+        Constructs an SbatchWriter from a workflow step configuration.
+
+        :param step_config: the workflow step configuration
+        :param filepath: path to the new Slurm submission script
+        :param jobname: name of the Slurm submission
+        :param kwargs: supported keyword arguments
+        :return: an SbatchWriter object
+        """
 
         time = step_config.pop("time") + step_config.pop("time_padding")
 
@@ -60,6 +78,12 @@ class SbatchWriter(FileWriter):
 
         if self.args.get("cores"):
             self.append("#SBATCH -n {}\n".format(self.args["cores"]))
+
+        if self.args.get("memory"):
+            self.append("#SBATCH --mem={}\n".format(self.args["memory"]))
+
+        if self.args.get("mem_per_cpu"):
+            self.append("#SBATCH --mem_per_cpu={}\n".format(self.args["mem_per_cpu"]))
 
         if self.args.get("partition"):
             self.append("#SBATCH -p {}\n".format(self.args["partition"]))
@@ -88,6 +112,7 @@ class SbatchWriter(FileWriter):
     def submit(self) -> int:
         """
         Submits the sbatch file represented by this SbatchWriter using the ``sbatch`` command.
+
         :return: the job ID of the submitted job
         """
         working_dir = self.filepath.parent
@@ -134,11 +159,11 @@ def parse_args(sys_args: List[str]) -> dict:
 
     # optional info
     parser.add_argument(
-        "-m", "--mem",
+        "-m", "--memory",
         type=int,
         help="amount of memory per node in gigabytes")
     parser.add_argument(
-        "-mcpu", "--mem-per-cpu",
+        "-mcpu", "--mem_per_cpu",
         type=int,
         help="amount of memory per CPU in gigabytes")
     parser.add_argument(
@@ -153,7 +178,6 @@ def parse_args(sys_args: List[str]) -> dict:
     parser.add_argument(
         "-e", "--email",
         type=str,
-        default=config["email"],
         help="email address to send job termination notification; default email if none given")
     parser.add_argument(
         "-d_type", "--dependency_type",
