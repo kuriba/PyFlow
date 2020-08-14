@@ -13,12 +13,10 @@ from pyflow.mol.mol_utils import valid_smiles
 
 rdBase.DisableLog('rdApp.warning')
 
-# TODO add comments
-
 """
 This is a script which substitutes a given core molecule with the standard set
 of spacers and linkers developed by Biruk Abreha and Steven Lopez. The script
-will perform substituions on the core at position indicated using Uranium (U).
+will perform substitutions on the core at position indicated using Uranium (U).
 The conformers are written to PDB files in a folder named after the given
 molecule name.
 
