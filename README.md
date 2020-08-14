@@ -1,7 +1,7 @@
 # PyFlow: A Generalized Program for Running Custom Sequences of Quantum Chemistry Calculations using Slurm
 PyFlow is a program designed to develop custom, modular, high-throughput quantum chemistry screening workflows to support the discovery of novel, sustainable materials. PyFlow offers significant flexibility and allows you to easily setup an automated workflow for computing ground or excited state molecular geometries and energies.
 
-##### Prerequisites
+#### Prerequisites
 - Access to a high-performance computing (HPC) cluster
 - [Gaussian 16](https://gaussian.com/gaussian16/) and/or [GAMESS](https://www.msg.chem.iastate.edu/GAMESS/) version 2018-R1 or later
 - [Anaconda](https://www.anaconda.com/) with Python 3.8+
@@ -32,6 +32,7 @@ PyFlow is a program designed to develop custom, modular, high-throughput quantum
     
 6. If you intend to use GAMESS, create a directory called `scr` within your scratch directory.
 
+---
 
 ## Creating a custom workflow
 
@@ -39,7 +40,7 @@ PyFlow is a program designed to develop custom, modular, high-throughput quantum
 
 The heart of workflow customizability is in the workflow configuration file. The workflow configuration file is a JSON-formatted file that defines the steps in a workflow and instructions for how to run each step. This file has some specific formatting requirements but has the general structure shown below.
 
-```json
+```
 {
   "default": {
     "initial_step": "X",
@@ -174,6 +175,7 @@ pyflow build_config --config_file new_config.json --config_id default
 ```
 You will see several prompts to enter step information and modify step parameters for your new workflow configuration (you can add a workflow configuration with a new ID to an existing configuration file by providing the path to the existing config file as the argument for `--config_file`).
 
+---
 
 ## Setting up and running a workflow
 
@@ -182,12 +184,12 @@ Execution of a workflow is accomplished in three steps:
 2. Uploading molecules (as PDB files) to the `unopt_pdbs` folder of the workflow
 3. Submitting the workflow
 
-##### Setting up a workflow directory
+#### Setting up a workflow directory
 To create a directory for your workflow, go to your scratch directory and run the following command, replacing `my_first_workflow` with your desired workflow name. The argument for the `config_file` flag should be the path to the desired workflow configuration file, and the argument for the `config_id` flag specifies which configuration to use from the specified configuration file.
 ```console
 pyflow setup my_first_workflow --config_file /path/to/config/file --config_id "default"
 ```
-##### Uploading molecules
+#### Uploading molecules
 Next, place the molecules for the workflow in the `unopt_pdbs` folder of the workflow directory that was created in the previous step. The structures should use the PDB format. The files should be named with the InChIKey of the molecule, followed by an underscore, followed by the conformer ID*, starting from 0.
 ```
 XXXXXXXXXXXXXX-YYYYYYYYYY-Z_0.pdb
@@ -196,17 +198,62 @@ XXXXXXXXXXXXXX-YYYYYYYYYY-Z_2.pdb
 XXXXXXXXXXXXXX-YYYYYYYYYY-Z_3.pdb
 ```
 *_Note: If you only have one conformer for each molecule, the PDB files should each have the conformer ID "0"._
-##### Submitting the workflow
+#### Submitting the workflow
 To submit the workflow, run the following command while you're located in the workflow directory. This command will set up the input files for the first step using the initial coordinates from the structures in the `unopt_pdbs` folder, then submit them as an array.
 ```console
 pyflow begin
 ```
-##### Progress monitoring
+#### Progress monitoring
 The `progress` command is provided for easily monitoring the progress of a workflow. To use it, simply go to the directory of a running or completed workflow and execute the following command. This will output a small report on the overall progress of the calculations.
 ```console
 pyflow progress
 ```
+
 ---
+
+## File generation utilities
+To simplify the generation of Gaussian 16 input files and Slurm submission scripts, these utilities are accessible as their own actions: `g16` and `sbatch`, respectively. Below you'll find several examples which demonstrate how to use these utilities to generate files.
+
+### Gaussian 16 input files
+Generating a Gaussian 16 input file requires two arguments: a route and a geometry file (for the initial coordinates).
+
+In this first example, a Gaussian 16 input file named `file.com` will be generated with the coordinates from file.pdb and the route "#p pm7 opt". This example uses default values for the charge (0), multiplicity (1), nproc (14), and memory (8 GB).
+```console
+pyflow g16 -r "#p pm7 opt" -g /path/to/geometry/file.pdb
+```
+It is possible to specify the charge, multiplicity, memory and CPU allocation as follows.
+```console
+pyflow g16 -r "#p pm7 opt" -g /path/to/geometry/file.pdb --charge 1 --multiplicity 3 --memory 16 --nproc 16
+```
+The file generator attempts to determine the format of the initial geometry file based on its file ending (pdb in the examples above). If the file ending does not match a known Open Babel format, you can specify the format with the `--geometry_format` flag (refer to the [Open Babel documentation](https://open-babel.readthedocs.io/en/latest/FileFormats/Overview.html) for a complete list of supported formats).
+```console
+pyflow g16 -r "#p pm7 opt" -g /path/to/geometry/file.o --geometry_format xyz
+```
+_Note: use `pyflow g16 --help` for an exhaustive list of options available for generating Gaussian 16 input files._
+
+### Slurm submission scripts
+Generating Slurm submission scripts requires two arguments: a jobname and a file with commands to run.
+
+In this example, a Slurm submission script named `generic_slurm_job.sbatch` will be generated with the commands in the commands.txt text file.
+```console
+pyflow sbatch -j generic_slurm_job -c /path/to/commands.txt
+```
+
+A number of arguments can be used to customize the Slurm submission script. In the example below, the partition, time limit (in minutes), number of nodes, and memory per node (in GB) are specified.
+```console
+pyflow sbatch -j another_generic_job -c /path/to/commands.txt --partition lopez --time 2880 --nodes 2 --memory 64
+```
+
+It is also possible to generate a submission script for an array with the `--array` flag. In the following example, a Slurm array submission script will be generated with 500 jobs in the array limited to 50 simultaneously running jobs.
+
+```console
+pyflow sbatch -j generic_array_job -c /path/to/commands.txt --array 500 --simul_jobs 40
+```
+
+_Note: use `pyflow sbatch --help` for an exhaustive list of options available for generating Slurm submission scripts._
+
+---
+
 #### Acknowledgements
 
    Prof. Steven A. Lopez  
