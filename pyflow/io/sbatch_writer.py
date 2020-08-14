@@ -222,6 +222,8 @@ def parse_args(sys_args: List[str]) -> dict:
 
 # uses arguments to construct a Slurm submission script
 def main(args: dict):
-    sbatch_writer = SbatchWriter(**args)
+    filepath = Path(args.pop("location")).resolve() / "{}.sbatch".format(args["jobname"])
+
+    sbatch_writer = SbatchWriter(filepath=filepath, **args)
 
     sbatch_writer.write()
