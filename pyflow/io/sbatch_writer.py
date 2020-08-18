@@ -82,10 +82,10 @@ class SbatchWriter(FileWriter):
             self.append("#SBATCH -n {}\n".format(self.args["cores"]))
 
         if self.args.get("memory"):
-            self.append("#SBATCH --mem={}\n".format(self.args["memory"]))
+            self.append("#SBATCH --mem={}GB\n".format(self.args["memory"]))
 
         if self.args.get("mem_per_cpu"):
-            self.append("#SBATCH --mem_per_cpu={}\n".format(self.args["mem_per_cpu"]))
+            self.append("#SBATCH --mem_per_cpu={}GB\n".format(self.args["mem_per_cpu"]))
 
         if self.args.get("partition"):
             self.append("#SBATCH -p {}\n".format(self.args["partition"]))
