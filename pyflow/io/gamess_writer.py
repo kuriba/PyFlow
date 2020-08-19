@@ -43,7 +43,8 @@ class GamessWriter(AbstractInputFileWriter):
         # $SYSTEM group
         system_group = [" $SYSTEM"]
         if self.args["memory"]:
-            system_group.append("MWORDS={}".format(self.args["memory"]))
+            mwords = 125 * int(self.args["memory"])
+            system_group.append("MWORDS={}".format(mwords))
         if self.args["time"]:
             system_group.append("TIMLIM={}".format(self.args["time"]))
         system_group.append("$END\n")
