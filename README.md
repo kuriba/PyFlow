@@ -244,7 +244,7 @@ A number of arguments can be used to customize the Slurm submission script. In t
 pyflow sbatch -j another_generic_job -c /path/to/commands.txt --partition lopez --time 2880 --nodes 2 --memory 64
 ```
 
-It is also possible to generate a submission script for an array with the `--array` flag. In the following example, a Slurm array submission script will be generated with 500 jobs in the array limited to 50 simultaneously running jobs.
+It is also possible to generate a submission script for an array with the `--array` flag. In the following example, a Slurm array submission script will be generated with 500 jobs in the array limited to 40 simultaneously running jobs.
 
 ```console
 pyflow sbatch -j generic_array_job -c /path/to/commands.txt --array 500 --simul_jobs 40
